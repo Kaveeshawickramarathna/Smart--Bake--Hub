@@ -29,8 +29,8 @@ const createBooking = async (req, res) => {
         }
 
         // Validate business hours
-        if (start_time < '08:00' || end_time > '23:00') {
-            return res.status(400).json({ message: 'Bookings are only allowed between 08:00 AM and 11:00 PM.' });
+        if (start_time < '09:00' || end_time > '22:00') {
+            return res.status(400).json({ message: 'Bookings are only allowed between 09:00 AM and 10:00 PM.' });
         }
 
         // Check if the selected hall is already booked for the given date and time overlap
@@ -160,8 +160,8 @@ const checkAvailability = async (req, res) => {
         return res.status(400).json({ message: 'Please specify date, start time, end time, and hall' });
     }
 
-    if (start_time < '08:00' || end_time > '23:00') {
-        return res.status(400).json({ message: 'Bookings are only allowed between 08:00 AM and 11:00 PM.' });
+    if (start_time < '09:00' || end_time > '22:00') {
+        return res.status(400).json({ message: 'Bookings are only allowed between 09:00 AM and 10:00 PM.' });
     }
 
     try {

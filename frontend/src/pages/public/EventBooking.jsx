@@ -305,8 +305,8 @@ const EventBooking = () => {
                                                 <input 
                                                     type="time" 
                                                     name="start_time" 
-                                                    min="08:00"
-                                                    max="22:00"
+                                                    min="09:00"
+                                                    max="21:00"
                                                     value={formData.start_time} 
                                                     onChange={handleInputChange}
                                                     className="w-full bg-[#F7F4ED]/50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-[#C8843B] transition-colors"
@@ -315,8 +315,8 @@ const EventBooking = () => {
                                                 <input 
                                                     type="time" 
                                                     name="end_time" 
-                                                    min="09:00"
-                                                    max="23:00"
+                                                    min="10:00"
+                                                    max="22:00"
                                                     value={formData.end_time} 
                                                     onChange={handleInputChange}
                                                     className="w-full bg-[#F7F4ED]/50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-[#C8843B] transition-colors"
