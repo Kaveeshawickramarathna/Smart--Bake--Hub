@@ -21,6 +21,7 @@ import Orders from '../admin/Orders';
 import ChatSupport from '../admin/ChatSupport';
 import Events from '../admin/Events';
 import ProductMenuManagement from '../admin/ProductMenuManagement';
+import InventoryManagement from '../admin/InventoryManagement';
 import SettingsPage from '../admin/Settings';
 import TablesManagement from '../admin/TablesManagement';
 
@@ -455,74 +456,61 @@ const StaffDashboard = () => {
                     {/* MAIN MIDDLE ROW */}
                     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
                         
-                        {/* Revenue Chart */}
+                        {/* High Waste Risk Alerts */}
                         <div className="lg:col-span-2 bg-white rounded-3xl p-6 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] border border-gray-50 flex flex-col">
                             <div className="flex justify-between items-center mb-6">
                                 <div>
-                                    <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">Total Revenue</h2>
-                                    <p className="text-xs font-semibold text-gray-400">Sales Overview</p>
+                                    <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">High-Waste Risk & Discounts</h2>
+                                    <p className="text-xs font-semibold text-gray-400">AI-Powered Alerts</p>
                                 </div>
-                                <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 rounded-xl border border-gray-100 text-sm font-semibold cursor-pointer hover:bg-gray-100 transition-colors">
-                                    <Calendar className="w-4 h-4 text-gray-500" />
-                                    This Month <ChevronDown className="w-3 h-3 text-gray-400" />
+                                <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 text-red-600 rounded-xl border border-red-100 text-sm font-bold">
+                                    <AlertTriangle className="w-4 h-4" /> Action Required
                                 </div>
                             </div>
-                            <div className="flex-1 min-h-[250px] w-full">
-                                <ResponsiveContainer width="100%" height="100%">
-                                    <BarChart data={revenueData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-                                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f3f4f6" />
-                                        <XAxis 
-                                            dataKey="name" 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 600 }} 
-                                            dy={10}
-                                        />
-                                        <YAxis 
-                                            axisLine={false} 
-                                            tickLine={false} 
-                                            tick={{ fill: '#9ca3af', fontSize: 12, fontWeight: 600 }}
-                                        />
-                                        <RechartsTooltip 
-                                            cursor={{fill: 'transparent'}}
-                                            content={({ active, payload }) => {
-                                                if (active && payload && payload.length) {
-                                                    return (
-                                                        <div className="bg-gray-900 text-white px-4 py-2 rounded-xl shadow-xl">
-                                                            <div className="font-bold text-lg flex items-center gap-1">
-                                                                <span className="text-[#C8843B]">Rs</span> {payload[0].value}k
-                                                            </div>
-                                                            <div className="text-[10px] text-gray-300">Revenue in {payload[0].payload.name}</div>
-                                                        </div>
-                                                    );
-                                                }
-                                                return null;
-                                            }}
-                                        />
-                                        <Bar dataKey="value" fill="#C8843B" radius={[8, 8, 8, 8]} barSize={24} />
-                                    </BarChart>
-                                </ResponsiveContainer>
+                            <div className="flex-1 space-y-4">
+                                {[
+                                    { name: 'Butter Croissants', expiry: 'Today, 8:00 PM', stock: 15, discount: '20% OFF' },
+                                    { name: 'Chicken Pastry', expiry: 'Tomorrow, 10:00 AM', stock: 22, discount: '15% OFF' },
+                                    { name: 'Chocolate Donuts', expiry: 'Today, 9:00 PM', stock: 8, discount: '30% OFF' }
+                                ].map((item, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-4 bg-orange-50/50 rounded-2xl border border-orange-100/50">
+                                        <div className="flex items-center gap-4">
+                                            <div className="w-10 h-10 rounded-xl bg-orange-100 flex items-center justify-center">
+                                                <AlertTriangle className="w-5 h-5 text-orange-500" />
+                                            </div>
+                                            <div>
+                                                <h4 className="text-sm font-bold text-gray-900">{item.name}</h4>
+                                                <p className="text-xs text-orange-600 font-semibold">Expiring: {item.expiry} • {item.stock} left in stock</p>
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-3">
+                                            <span className="px-3 py-1 bg-green-100 text-green-700 font-black text-xs rounded-lg">{item.discount} Suggested</span>
+                                            <button className="px-4 py-2 bg-[#C8843B] hover:bg-[#A66D31] text-white font-bold text-xs rounded-xl transition-colors">
+                                                Apply
+                                            </button>
+                                        </div>
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
-                        {/* Business Data & Stores */}
+                        {/* Daily Operations */}
                         <div className="space-y-6">
                             
-                            {/* Business Data */}
                             <div className="bg-white rounded-3xl p-6 shadow-[0_2px_15px_-3px_rgba(0,0,0,0.04)] border border-gray-50">
                                 <div className="flex justify-between items-center mb-6">
-                                    <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">Business Data</h2>
+                                    <h2 className="text-lg font-extrabold text-gray-900 tracking-tight">Daily Operations</h2>
                                     <div className="flex items-center gap-1 px-3 py-1 bg-gray-50 rounded-lg text-xs font-bold text-gray-500 cursor-pointer hover:bg-gray-100 transition-colors">
-                                        This Week <ChevronDown className="w-3 h-3" />
+                                        Today <ChevronDown className="w-3 h-3" />
                                     </div>
                                 </div>
                                 <div className="space-y-3">
                                     {/* Stat 1 */}
                                     <div className="bg-[#F8FAFC] p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-[#F1F5F9] transition-colors">
                                         <div>
-                                            <div className="text-[11px] font-bold text-gray-400 mb-1">Number of Customers</div>
+                                            <div className="text-[11px] font-bold text-gray-400 mb-1">Dine-in Orders</div>
                                             <div className="flex items-center gap-2 text-xl font-black text-gray-900">
-                                                <Users className="w-4 h-4 text-gray-400" /> 197
+                                                <Store className="w-4 h-4 text-gray-400" /> {orders.filter(o => o.type === 'Dine-in').length || 12}
                                             </div>
                                         </div>
                                         <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-gray-400 group-hover:text-[#C8843B] shadow-sm">
@@ -532,9 +520,9 @@ const StaffDashboard = () => {
                                     {/* Stat 2 */}
                                     <div className="bg-[#FFF4ED] p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-[#FFEDDF] transition-colors">
                                         <div>
-                                            <div className="text-[11px] font-bold text-[#C8843B] mb-1">Total Orders</div>
+                                            <div className="text-[11px] font-bold text-[#C8843B] mb-1">Takeaway Orders</div>
                                             <div className="flex items-center gap-2 text-xl font-black text-[#C8843B]">
-                                                <ShoppingBag className="w-4 h-4" /> {orders.length > 0 ? orders.length : 270}
+                                                <ShoppingBag className="w-4 h-4" /> {orders.filter(o => o.type === 'Takeaway').length || 24}
                                             </div>
                                         </div>
                                         <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-[#C8843B] group-hover:text-[#C8843B] shadow-sm">
@@ -544,9 +532,9 @@ const StaffDashboard = () => {
                                     {/* Stat 3 */}
                                     <div className="bg-[#F8FAFC] p-4 rounded-2xl flex items-center justify-between group cursor-pointer hover:bg-[#F1F5F9] transition-colors">
                                         <div>
-                                            <div className="text-[11px] font-bold text-gray-400 mb-1">Average Order Values</div>
+                                            <div className="text-[11px] font-bold text-gray-400 mb-1">Active Bookings</div>
                                             <div className="flex items-center gap-2 text-xl font-black text-gray-900">
-                                                Rs 1250.00
+                                                <Calendar className="w-4 h-4 text-gray-400" /> {bookings.length || 3}
                                             </div>
                                         </div>
                                         <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-gray-400 group-hover:text-[#C8843B] shadow-sm">
@@ -646,7 +634,7 @@ const StaffDashboard = () => {
 
                     {activeTab === 'orders' && <Orders />}
                     {activeTab === 'kitchen' && <Orders />}
-                    {activeTab === 'inventory' && <ProductMenuManagement />}
+                    {activeTab === 'inventory' && <InventoryManagement />}
                     {activeTab === 'tables' && <TablesManagement />}
                     {activeTab === 'events' && <Events />}
                     {activeTab === 'chat' && <ChatSupport />}
