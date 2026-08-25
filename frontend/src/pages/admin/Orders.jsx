@@ -9,6 +9,10 @@ const Orders = () => {
     const [filter, setFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedOrder, setExpandedOrder] = useState(null);
+    const [prepModalOpen, setPrepModalOpen] = useState(false);
+    const [prepOrder, setPrepOrder] = useState(null);
+    const [prepTimeHours, setPrepTimeHours] = useState(0);
+    const [prepTimeMinutes, setPrepTimeMinutes] = useState(30);
 
     useEffect(() => {
         fetchOrders();
@@ -27,21 +31,22 @@ const Orders = () => {
     };
 
     const updateStatus = async (orderId, newStatus) => {
-        let prepTime = null;
         if (newStatus === 'accepted' || newStatus === 'preparing') {
-            const time = window.prompt("Enter estimated preparation time in minutes (e.g., 30):", "30");
-            if (time === null) return; // User cancelled
-            prepTime = parseInt(time, 10);
-            if (isNaN(prepTime) || prepTime <= 0) {
-                toast.error("Please enter a valid number of minutes.");
-                return;
-            }
+            setPrepOrder({ orderId, newStatus });
+            setPrepTimeHours(0);
+            setPrepTimeMinutes(30);
+            setPrepModalOpen(true);
+            return;
         }
+        submitStatusUpdate(orderId, newStatus, null);
+    };
 
+    const submitStatusUpdate = async (orderId, newStatus, prepTime) => {
         try {
             await api.patch(`/orders/${orderId}/status`, { status: newStatus, prep_time: prepTime });
             toast.success(`Order #${orderId} marked as ${newStatus}`);
             fetchOrders();
+            setPrepModalOpen(false);
         } catch (error) {
             toast.error('Failed to update status');
         }
@@ -216,6 +221,61 @@ const Orders = () => {
                                 ))}
                             </tbody>
                         </table>
+                    </div>
+                </div>
+            )}
+            {prepModalOpen && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-white rounded-3xl p-6 w-full max-w-sm shadow-xl border border-[#C8843B]/20">
+                        <h3 className="text-xl font-bold text-[#2E1A12] mb-2 font-serif">Estimated Ready Time</h3>
+                        <p className="text-sm text-gray-500 mb-6">Enter how long it will take to prepare this order.</p>
+                        
+                        <div className="flex gap-4 mb-6">
+                            <div className="flex-1">
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Hours</label>
+                                <input 
+                                    type="number" 
+                                    min="0" 
+                                    max="24"
+                                    value={prepTimeHours} 
+                                    onChange={(e) => setPrepTimeHours(e.target.value)}
+                                    className="w-full bg-[#FDF6ED] border border-[#C8843B]/30 rounded-xl px-4 py-3 text-[#2E1A12] font-semibold focus:outline-none focus:border-[#C8843B]"
+                                />
+                            </div>
+                            <div className="flex-1">
+                                <label className="block text-xs font-bold text-gray-400 uppercase tracking-wider mb-2">Minutes</label>
+                                <input 
+                                    type="number" 
+                                    min="0" 
+                                    max="59"
+                                    value={prepTimeMinutes} 
+                                    onChange={(e) => setPrepTimeMinutes(e.target.value)}
+                                    className="w-full bg-[#FDF6ED] border border-[#C8843B]/30 rounded-xl px-4 py-3 text-[#2E1A12] font-semibold focus:outline-none focus:border-[#C8843B]"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex gap-3">
+                            <button 
+                                onClick={() => setPrepModalOpen(false)}
+                                className="flex-1 px-4 py-3 bg-gray-100 text-gray-600 rounded-xl font-bold hover:bg-gray-200 transition-colors text-sm"
+                            >
+                                Cancel
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    const totalMinutes = (parseInt(prepTimeHours) || 0) * 60 + (parseInt(prepTimeMinutes) || 0);
+                                    if (totalMinutes <= 0) {
+                                        toast.error("Please enter a valid time.");
+                                        return;
+                                    }
+                                    submitStatusUpdate(prepOrder.orderId, prepOrder.newStatus, totalMinutes);
+                                }}
+                                className="flex-1 px-4 py-3 bg-[#C8843B] text-white rounded-xl font-bold hover:bg-[#b0702c] transition-colors shadow-sm text-sm"
+                            >
+                                Confirm
+                            </button>
+                        </div>
                     </div>
                 </div>
             )}

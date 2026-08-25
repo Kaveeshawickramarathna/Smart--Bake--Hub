@@ -4,7 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { 
     User, Mail, Lock, Key, ArrowLeft, Shield, Save,
     ShoppingBag, Calendar as CalendarIcon, Settings,
-    Clock, Package, Utensils, ShoppingCart, LogOut, Store, Menu, Bell, ChevronRight
+    Clock, Package, Utensils, ShoppingCart, LogOut, Store, Menu, Bell, ChevronRight, Check
 } from 'lucide-react';
 import LogoutConfirmation from '../../components/LogoutConfirmation';
 import toast from 'react-hot-toast';
@@ -31,6 +31,7 @@ const Profile = () => {
     // Orders and Bookings state
     const [orders, setOrders] = useState([]);
     const [bookings, setBookings] = useState([]);
+    const [notifications, setNotifications] = useState([]);
     const [loadingData, setLoadingData] = useState(false);
 
     // Cart state
@@ -58,10 +59,36 @@ const Profile = () => {
     }, []);
 
     useEffect(() => {
+        fetchNotifications();
+    }, []);
+
+    useEffect(() => {
         if (activeTab === 'orders' || activeTab === 'bookings') {
             fetchUserData();
+        } else if (activeTab === 'notifications') {
+            markAllAsRead();
         }
     }, [activeTab]);
+
+    const fetchNotifications = async () => {
+        try {
+            const { data } = await api.get('/notifications');
+            setNotifications(data);
+        } catch (error) {
+            console.error('Failed to fetch notifications', error);
+        }
+    };
+
+    const markAllAsRead = async () => {
+        try {
+            await api.patch('/notifications/mark-all-read');
+            setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+        } catch (error) {
+            console.error('Failed to mark notifications as read', error);
+        }
+    };
+
+    const unreadCount = notifications.filter(n => !n.is_read).length;
 
     const fetchUserData = async () => {
         setLoadingData(true);
@@ -233,8 +260,9 @@ const Profile = () => {
                             
                             <button onClick={() => setActiveTab('notifications')} className="relative p-2 rounded-full text-[#2E1A12] hover:bg-white hover:text-[#C8843B] transition-colors" title="Notifications">
                                 <Bell className="w-5 h-5" />
-                                {/* Optional notification indicator dot */}
-                                {/* <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-[#C8843B] rounded-full border-2 border-[#F7F4ED]"></span> */}
+                                {unreadCount > 0 && (
+                                    <span className="absolute top-1 right-1 w-2.5 h-2.5 bg-red-500 rounded-full border-2 border-[#F7F4ED]"></span>
+                                )}
                             </button>
                             
                             <button onClick={() => setActiveTab('settings')} className="p-2 rounded-full text-[#2E1A12] hover:bg-white hover:text-[#C8843B] transition-colors" title="Settings">
@@ -270,13 +298,10 @@ const Profile = () => {
                                         <div className="space-y-4">
                                             {orders.map(order => {
                                                 const totalQuantity = order.items?.reduce((acc, item) => acc + (item.quantity || 1), 0) || 0;
-                                                let prepTimeMinutes = order.prep_time || 60;
-                                                if (!order.prep_time) {
-                                                    if (totalQuantity >= 3 && totalQuantity <= 4) prepTimeMinutes = 90;
-                                                    else if (totalQuantity > 4) prepTimeMinutes = 120;
+                                                let readyTime = null;
+                                                if (order.prep_time) {
+                                                    readyTime = new Date(new Date(order.created_at).getTime() + order.prep_time * 60000);
                                                 }
-                                                
-                                                const readyTime = new Date(new Date(order.created_at).getTime() + prepTimeMinutes * 60000);
                                                 const isFinalStatus = ['ready', 'completed', 'cancelled'].includes(order.status);
                                                 
                                                 return (
@@ -309,10 +334,16 @@ const Profile = () => {
                                                         {!isFinalStatus && (
                                                             <div className="flex items-center gap-2">
                                                                 <span className="text-[10px] font-bold text-[#C8843B] uppercase tracking-wider">Ready Time:</span>
-                                                                <span className="text-xs font-bold bg-[#C8843B]/10 text-[#C8843B] px-2 py-1 rounded-md flex items-center gap-1">
-                                                                    <Clock className="w-3 h-3" />
-                                                                    {readyTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                                                </span>
+                                                                {readyTime ? (
+                                                                    <span className="text-xs font-bold bg-[#C8843B]/10 text-[#C8843B] px-2 py-1 rounded-md flex items-center gap-1">
+                                                                        <Clock className="w-3 h-3" />
+                                                                        {readyTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                                                    </span>
+                                                                ) : (
+                                                                    <span className="text-xs font-bold bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md">
+                                                                        Pending Admin Approval
+                                                                    </span>
+                                                                )}
                                                             </div>
                                                         )}
                                                     </div>
@@ -539,11 +570,33 @@ const Profile = () => {
                                         <Bell className="w-6 h-6 text-[#C8843B]" /> Notifications
                                     </h3>
                                     
-                                    <div className="bg-gray-50 rounded-2xl p-12 text-center border border-gray-100">
-                                        <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                                        <h4 className="font-bold text-[#2E1A12]">No New Notifications</h4>
-                                        <p className="text-xs text-gray-400 mt-2">You're all caught up! Check back later for updates on your orders and bookings.</p>
-                                    </div>
+                                    {notifications.length === 0 ? (
+                                        <div className="bg-gray-50 rounded-2xl p-12 text-center border border-gray-100">
+                                            <Bell className="w-12 h-12 text-gray-300 mx-auto mb-4" />
+                                            <h4 className="font-bold text-[#2E1A12]">No Notifications</h4>
+                                            <p className="text-xs text-gray-400 mt-2">You don't have any notifications yet. Check back later!</p>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-3">
+                                            {notifications.map(notification => (
+                                                <div key={notification.id} className={`p-4 rounded-xl border ${notification.is_read ? 'bg-white border-gray-100' : 'bg-[#FDF6ED] border-[#C8843B]/20'} shadow-sm flex items-start gap-4 transition-colors`}>
+                                                    <div className={`p-2 rounded-full ${notification.is_read ? 'bg-gray-100 text-gray-400' : 'bg-[#C8843B]/10 text-[#C8843B]'}`}>
+                                                        <Bell className="w-5 h-5" />
+                                                    </div>
+                                                    <div className="flex-1">
+                                                        <h4 className={`text-sm font-bold ${notification.is_read ? 'text-gray-700' : 'text-[#2E1A12]'}`}>{notification.title}</h4>
+                                                        <p className="text-xs text-gray-600 mt-1">{notification.message}</p>
+                                                        <div className="text-[10px] text-gray-400 font-bold uppercase tracking-wider mt-2 flex items-center gap-1">
+                                                            <Clock className="w-3 h-3" /> {new Date(notification.created_at).toLocaleString()}
+                                                        </div>
+                                                    </div>
+                                                    {!notification.is_read && (
+                                                        <div className="w-2 h-2 rounded-full bg-[#C8843B] mt-2"></div>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </div>
                             )}
                     </div>
