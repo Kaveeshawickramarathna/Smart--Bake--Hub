@@ -27,8 +27,19 @@ const Orders = () => {
     };
 
     const updateStatus = async (orderId, newStatus) => {
+        let prepTime = null;
+        if (newStatus === 'accepted' || newStatus === 'preparing') {
+            const time = window.prompt("Enter estimated preparation time in minutes (e.g., 30):", "30");
+            if (time === null) return; // User cancelled
+            prepTime = parseInt(time, 10);
+            if (isNaN(prepTime) || prepTime <= 0) {
+                toast.error("Please enter a valid number of minutes.");
+                return;
+            }
+        }
+
         try {
-            await api.patch(`/orders/${orderId}/status`, { status: newStatus });
+            await api.patch(`/orders/${orderId}/status`, { status: newStatus, prep_time: prepTime });
             toast.success(`Order #${orderId} marked as ${newStatus}`);
             fetchOrders();
         } catch (error) {

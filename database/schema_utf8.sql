@@ -119,7 +119,7 @@ CREATE TABLE `bookings` (
 
 LOCK TABLES `bookings` WRITE;
 /*!40000 ALTER TABLE `bookings` DISABLE KEYS */;
-INSERT INTO `bookings` VALUES (1,20,'Test','test@test.com','1234567890','Birthday','2026-09-01','Custom','09:00:00','10:00:00',50,'Grand Ballroom','Gold','[]',275000.00,NULL,'pending','2026-08-25 14:07:18','2026-08-25 14:07:18'),(2,20,'vijitha','kusum@gmail.com','0342255762','Wedding','2026-08-28','Custom','10:00:00','11:00:00',50,'Sapphire Hall','Gold','[\"cake\"]',212000.00,NULL,'pending','2026-08-25 15:02:56','2026-08-25 15:02:56'),(3,20,'kusum','kusum@gmail.com','0765467345','Anniversary','2026-09-06','Custom','20:30:00','22:00:00',50,'Grand Ballroom','Platinum','[\"av\"]',350000.00,NULL,'pending','2026-08-25 15:08:22','2026-08-25 15:08:22');
+INSERT INTO `bookings` VALUES (1,20,'Test','test@test.com','1234567890','Birthday','2026-09-01','Custom','09:00:00','10:00:00',50,'Grand Ballroom','Gold','[]',275000.00,NULL,'cancelled','2026-08-25 14:07:18','2026-08-25 14:07:18'),(2,20,'vijitha','kusum@gmail.com','0342255762','Wedding','2026-08-28','Custom','10:00:00','11:00:00',50,'Sapphire Hall','Gold','[\"cake\"]',212000.00,NULL,'pending','2026-08-25 15:02:56','2026-08-25 15:02:56'),(3,20,'kusum','kusum@gmail.com','0765467345','Anniversary','2026-09-06','Custom','20:30:00','22:00:00',50,'Grand Ballroom','Platinum','[\"av\"]',350000.00,NULL,'approved','2026-08-25 15:08:22','2026-08-25 15:08:22');
 /*!40000 ALTER TABLE `bookings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -356,6 +356,7 @@ CREATE TABLE `orders` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `special_note` text,
+  `prep_time` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
@@ -370,7 +371,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,21,1200.00,'takeaway',NULL,'pending','2026-08-25 12:28:27','2026-08-25 12:28:27',NULL),(2,21,1200.00,'takeaway',NULL,'pending','2026-08-25 12:28:32','2026-08-25 12:28:32',NULL),(3,21,600.00,'takeaway',NULL,'pending','2026-08-25 12:29:22','2026-08-25 12:29:22',NULL),(4,21,1870.00,'takeaway',NULL,'accepted','2026-08-25 12:32:26','2026-08-25 12:32:26',NULL);
+INSERT INTO `orders` VALUES (1,21,1200.00,'takeaway',NULL,'pending','2026-08-25 12:28:27','2026-08-25 12:28:27',NULL,NULL),(2,21,1200.00,'takeaway',NULL,'pending','2026-08-25 12:28:32','2026-08-25 12:28:32',NULL,NULL),(3,21,600.00,'takeaway',NULL,'pending','2026-08-25 12:29:22','2026-08-25 12:29:22',NULL,NULL),(4,21,1870.00,'takeaway',NULL,'accepted','2026-08-25 12:32:26','2026-08-25 12:32:26',NULL,NULL);
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -482,4 +483,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-25 15:13:50
+-- Dump completed on 2026-08-25 15:28:09

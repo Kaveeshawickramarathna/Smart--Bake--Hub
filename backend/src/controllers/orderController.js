@@ -155,10 +155,14 @@ const getMyOrders = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, prep_time } = req.body;
     
     try {
-        await pool.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+        if (prep_time) {
+            await pool.query('UPDATE orders SET status = ?, prep_time = ? WHERE id = ?', [status, prep_time, id]);
+        } else {
+            await pool.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
+        }
         res.json({ message: 'Order status updated successfully' });
     } catch (error) {
         console.error('Error updating order status:', error);
