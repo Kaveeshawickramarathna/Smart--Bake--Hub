@@ -112,22 +112,8 @@ const Order = () => {
 
             clearCart();
             
-            // Calculate Estimated Preparation Time
-            const totalQuantity = formattedItems.reduce((acc, item) => acc + (item.quantity || 1), 0);
-            let prepTimeMinutes = 60; // Default 1 hour
-            
-            if (totalQuantity >= 3 && totalQuantity <= 4) {
-                prepTimeMinutes = 90; // 1.5 hours
-            } else if (totalQuantity > 4) {
-                prepTimeMinutes = 120; // 2 hours
-            }
-            
-            const readyTime = new Date(Date.now() + prepTimeMinutes * 60000);
-            const timeString = readyTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-            const durationString = prepTimeMinutes === 60 ? "1 hour" : (prepTimeMinutes === 90 ? "1.5 hours" : (prepTimeMinutes / 60) + " hours");
-            
             setItems([]);
-            toast.success(`Order Placed! Ready around ${timeString} (in ${durationString})`, { 
+            toast.success('Order Placed Successfully! We will notify you when it is ready.', { 
                 icon: '🎉',
                 duration: 6000,
                 style: {

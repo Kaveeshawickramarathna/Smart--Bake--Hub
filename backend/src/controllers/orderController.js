@@ -160,6 +160,19 @@ const updateOrderStatus = async (req, res) => {
     try {
         if (prep_time) {
             await pool.query('UPDATE orders SET status = ?, prep_time = ? WHERE id = ?', [status, prep_time, id]);
+            
+            const [orderRows] = await pool.query('SELECT user_id FROM orders WHERE id = ?', [id]);
+            if (orderRows.length > 0) {
+                const userId = orderRows[0].user_id;
+                let hours = Math.floor(prep_time / 60);
+                let mins = prep_time % 60;
+                let timeString = hours > 0 ? (mins > 0 ? `${hours}h ${mins}m` : `${hours}h`) : `${mins}m`;
+
+                await pool.query(
+                    'INSERT INTO notifications (user_id, title, message, type) VALUES (?, ?, ?, ?)',
+                    [userId, `Order #${id} Accepted`, `Your order has been accepted and will be ready in approximately ${timeString}.`, 'order']
+                );
+            }
         } else {
             await pool.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
         }

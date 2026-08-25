@@ -288,8 +288,11 @@ CREATE TABLE `notifications` (
   `type` varchar(50) DEFAULT 'general',
   `is_read` tinyint(1) DEFAULT '0',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  `user_id` int DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  KEY `fk_notif_user` (`user_id`),
+  CONSTRAINT `fk_notif_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -298,7 +301,7 @@ CREATE TABLE `notifications` (
 
 LOCK TABLES `notifications` WRITE;
 /*!40000 ALTER TABLE `notifications` DISABLE KEYS */;
-INSERT INTO `notifications` VALUES (1,'New Order #4','A customer has placed a new takeaway order for Rs. 600.00.','order',1,'2026-08-25 12:32:26'),(2,'Order #4 Updated','Customer appended new items for Rs. 1270.00.','order',1,'2026-08-25 12:33:21');
+INSERT INTO `notifications` VALUES (1,'New Order #4','A customer has placed a new takeaway order for Rs. 600.00.','order',1,'2026-08-25 12:32:26',NULL),(2,'Order #4 Updated','Customer appended new items for Rs. 1270.00.','order',1,'2026-08-25 12:33:21',NULL),(3,'New Order #5','A customer has placed a new takeaway order for Rs. 600.00.','order',1,'2026-08-25 15:35:02',NULL),(4,'New Order #6','A customer has placed a new takeaway order for Rs. 585.00.','order',0,'2026-08-25 15:42:03',NULL),(5,'New Order #7','A customer has placed a new takeaway order for Rs. 585.00.','order',0,'2026-08-25 15:50:54',NULL),(6,'Order #7 Updated','Customer appended new items for Rs. 600.00.','order',0,'2026-08-25 15:54:51',NULL),(7,'New Order #8','A customer has placed a new takeaway order for Rs. 450.00.','order',1,'2026-08-25 15:59:09',NULL),(8,'Order #8 Accepted','Your order has been accepted and will be ready in approximately 1h 30m.','order',0,'2026-08-25 15:59:41',21);
 /*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -326,7 +329,7 @@ CREATE TABLE `order_items` (
   CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
   CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
   CONSTRAINT `order_items_ibfk_3` FOREIGN KEY (`menu_id`) REFERENCES `dishes` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -335,7 +338,7 @@ CREATE TABLE `order_items` (
 
 LOCK TABLES `order_items` WRITE;
 /*!40000 ALTER TABLE `order_items` DISABLE KEYS */;
-INSERT INTO `order_items` VALUES (1,4,NULL,3,1,600.00,'2026-08-25 12:32:26',NULL,'Vegetable Noodles'),(2,4,NULL,3,1,600.00,'2026-08-25 12:33:21',NULL,'Vegetable Noodles'),(3,4,NULL,NULL,1,500.00,'2026-08-25 12:33:21',6,'Papaya Juice'),(4,4,NULL,NULL,1,170.00,'2026-08-25 12:33:21',5,'Pepsi (250ml)');
+INSERT INTO `order_items` VALUES (1,4,NULL,3,1,600.00,'2026-08-25 12:32:26',NULL,'Vegetable Noodles'),(2,4,NULL,3,1,600.00,'2026-08-25 12:33:21',NULL,'Vegetable Noodles'),(3,4,NULL,NULL,1,500.00,'2026-08-25 12:33:21',6,'Papaya Juice'),(4,4,NULL,NULL,1,170.00,'2026-08-25 12:33:21',5,'Pepsi (250ml)'),(5,5,NULL,3,1,600.00,'2026-08-25 15:35:02',NULL,'Vegetable Noodles'),(6,6,NULL,10,1,585.00,'2026-08-25 15:42:03',NULL,'vegitable fride rice (Small)'),(7,7,NULL,10,1,585.00,'2026-08-25 15:50:54',NULL,'vegitable fride rice (Small)'),(8,7,NULL,3,1,600.00,'2026-08-25 15:54:51',NULL,'Vegetable Noodles'),(9,8,NULL,2,1,450.00,'2026-08-25 15:59:09',NULL,'Chicken With Egg Soup');
 /*!40000 ALTER TABLE `order_items` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -362,7 +365,7 @@ CREATE TABLE `orders` (
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `orders_chk_1` CHECK ((`order_type` in (_utf8mb4'dine-in',_utf8mb4'takeaway'))),
   CONSTRAINT `orders_chk_2` CHECK ((`status` in (_utf8mb4'pending',_utf8mb4'accepted',_utf8mb4'preparing',_utf8mb4'ready',_utf8mb4'completed',_utf8mb4'cancelled')))
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -371,7 +374,7 @@ CREATE TABLE `orders` (
 
 LOCK TABLES `orders` WRITE;
 /*!40000 ALTER TABLE `orders` DISABLE KEYS */;
-INSERT INTO `orders` VALUES (1,21,1200.00,'takeaway',NULL,'pending','2026-08-25 12:28:27','2026-08-25 12:28:27',NULL,NULL),(2,21,1200.00,'takeaway',NULL,'pending','2026-08-25 12:28:32','2026-08-25 12:28:32',NULL,NULL),(3,21,600.00,'takeaway',NULL,'pending','2026-08-25 12:29:22','2026-08-25 12:29:22',NULL,NULL),(4,21,1870.00,'takeaway',NULL,'accepted','2026-08-25 12:32:26','2026-08-25 12:32:26',NULL,NULL);
+INSERT INTO `orders` VALUES (1,21,1200.00,'takeaway',NULL,'pending','2026-08-25 12:28:27','2026-08-25 12:28:27',NULL,NULL),(2,21,1200.00,'takeaway',NULL,'pending','2026-08-25 12:28:32','2026-08-25 12:28:32',NULL,NULL),(3,21,600.00,'takeaway',NULL,'pending','2026-08-25 12:29:22','2026-08-25 12:29:22',NULL,NULL),(4,21,1870.00,'takeaway',NULL,'accepted','2026-08-25 12:32:26','2026-08-25 12:32:26',NULL,NULL),(5,21,600.00,'takeaway',NULL,'accepted','2026-08-25 15:35:02','2026-08-25 15:35:02',NULL,1),(6,21,585.00,'takeaway',NULL,'pending','2026-08-25 15:42:03','2026-08-25 15:42:03',NULL,NULL),(7,21,1185.00,'takeaway',NULL,'pending','2026-08-25 15:50:54','2026-08-25 15:50:54',NULL,NULL),(8,21,450.00,'takeaway',NULL,'accepted','2026-08-25 15:59:09','2026-08-25 15:59:09',NULL,90);
 /*!40000 ALTER TABLE `orders` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -483,4 +486,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-25 15:28:09
+-- Dump completed on 2026-08-25 16:00:57
