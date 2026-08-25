@@ -301,7 +301,7 @@ CREATE TABLE `notifications` (
 
 LOCK TABLES `notifications` WRITE;
 /*!40000 ALTER TABLE `notifications` DISABLE KEYS */;
-INSERT INTO `notifications` VALUES (1,'New Order #4','A customer has placed a new takeaway order for Rs. 600.00.','order',1,'2026-08-25 12:32:26',NULL),(2,'Order #4 Updated','Customer appended new items for Rs. 1270.00.','order',1,'2026-08-25 12:33:21',NULL),(3,'New Order #5','A customer has placed a new takeaway order for Rs. 600.00.','order',1,'2026-08-25 15:35:02',NULL),(4,'New Order #6','A customer has placed a new takeaway order for Rs. 585.00.','order',0,'2026-08-25 15:42:03',NULL),(5,'New Order #7','A customer has placed a new takeaway order for Rs. 585.00.','order',0,'2026-08-25 15:50:54',NULL),(6,'Order #7 Updated','Customer appended new items for Rs. 600.00.','order',0,'2026-08-25 15:54:51',NULL),(7,'New Order #8','A customer has placed a new takeaway order for Rs. 450.00.','order',1,'2026-08-25 15:59:09',NULL),(8,'Order #8 Accepted','Your order has been accepted and will be ready in approximately 1h 30m.','order',0,'2026-08-25 15:59:41',21);
+INSERT INTO `notifications` VALUES (1,'New Order #4','A customer has placed a new takeaway order for Rs. 600.00.','order',1,'2026-08-25 12:32:26',NULL),(2,'Order #4 Updated','Customer appended new items for Rs. 1270.00.','order',1,'2026-08-25 12:33:21',NULL),(3,'New Order #5','A customer has placed a new takeaway order for Rs. 600.00.','order',1,'2026-08-25 15:35:02',NULL),(4,'New Order #6','A customer has placed a new takeaway order for Rs. 585.00.','order',1,'2026-08-25 15:42:03',NULL),(5,'New Order #7','A customer has placed a new takeaway order for Rs. 585.00.','order',1,'2026-08-25 15:50:54',NULL),(6,'Order #7 Updated','Customer appended new items for Rs. 600.00.','order',1,'2026-08-25 15:54:51',NULL),(7,'New Order #8','A customer has placed a new takeaway order for Rs. 450.00.','order',1,'2026-08-25 15:59:09',NULL),(8,'Order #8 Accepted','Your order has been accepted and will be ready in approximately 1h 30m.','order',0,'2026-08-25 15:59:41',21);
 /*!40000 ALTER TABLE `notifications` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -464,7 +464,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `email` (`email`),
   CONSTRAINT `users_chk_1` CHECK ((`role` in (_latin1'admin',_latin1'staff',_latin1'customer'))),
   CONSTRAINT `users_chk_2` CHECK ((`status` in (_latin1'active',_latin1'inactive',_latin1'pending_verification')))
-) ENGINE=InnoDB AUTO_INCREMENT=22 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=23 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -473,7 +473,7 @@ CREATE TABLE `users` (
 
 LOCK TABLES `users` WRITE;
 /*!40000 ALTER TABLE `users` DISABLE KEYS */;
-INSERT INTO `users` VALUES (20,'nimmani','kaveeshanimmani2@gmail.com','$2b$10$nJT5D5c.cV8ALNn6P5v9f.TdToLQfY.mMyMLJ/60LE/iX.NTVczlS','admin','active',NULL,NULL,NULL,'2026-08-25 12:20:07','2026-08-25 12:20:07'),(21,'chamodi','chamodiumayangana2001@gmail.com','$2b$10$6yO98fYiixwRhnMXIhaOvO0KM.BO2a1ih9L0wahMT.YLm8PUa4NaW','customer','active',NULL,NULL,NULL,'2026-08-25 12:23:12','2026-08-25 12:23:12');
+INSERT INTO `users` VALUES (20,'nimmani','kaveeshanimmani2@gmail.com','$2b$10$nJT5D5c.cV8ALNn6P5v9f.TdToLQfY.mMyMLJ/60LE/iX.NTVczlS','admin','active',NULL,NULL,NULL,'2026-08-25 12:20:07','2026-08-25 12:20:07'),(21,'chamodi','chamodiumayangana2001@gmail.com','$2b$10$6yO98fYiixwRhnMXIhaOvO0KM.BO2a1ih9L0wahMT.YLm8PUa4NaW','customer','active',NULL,NULL,NULL,'2026-08-25 12:23:12','2026-08-25 12:23:12'),(22,'lahiru','lahiru@gmail.com','$2b$10$hAjefAL8tizqr0wLz1vggePt6Ozh/D2inZsOlMFEoiZRo8.8yDN0W','customer','active',NULL,NULL,NULL,'2026-08-25 16:14:26','2026-08-25 16:14:26');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
@@ -486,4 +486,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-25 16:00:57
+-- Dump completed on 2026-08-25 16:45:13
