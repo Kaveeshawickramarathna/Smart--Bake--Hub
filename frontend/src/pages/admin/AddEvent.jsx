@@ -17,8 +17,8 @@ const AddEvent = () => {
     const [formData, setFormData] = useState({
         event_type: 'Birthday',
         event_date: '',
-        start_time: '09:00',
-        end_time: '10:00',
+        start_time: '',
+        end_time: '',
         hall_name: 'Grand Ballroom',
         package_name: 'Gold',
         guest_count: 50,
@@ -49,7 +49,32 @@ const AddEvent = () => {
     ];
 
     useEffect(() => {
-        setIsAvailable(null);
+        const checkAutoAvailability = async () => {
+            if (!formData.event_date || !formData.start_time || !formData.end_time || !formData.hall_name) {
+                setIsAvailable(null);
+                return;
+            }
+            
+            setCheckingAvailability(true);
+            try {
+                const { data } = await api.get('/bookings/check-availability', {
+                    params: {
+                        date: formData.event_date,
+                        start_time: formData.start_time,
+                        end_time: formData.end_time,
+                        hall: formData.hall_name
+                    }
+                });
+                setIsAvailable(data.available);
+            } catch (error) {
+                console.error("Failed to auto-check availability", error);
+                setIsAvailable(null);
+            } finally {
+                setCheckingAvailability(false);
+            }
+        };
+
+        checkAutoAvailability();
     }, [formData.event_date, formData.start_time, formData.end_time, formData.hall_name]);
 
     const handleInputChange = (e) => {
@@ -86,35 +111,7 @@ const AddEvent = () => {
         return total;
     };
 
-    const checkAvailability = async () => {
-        if (!formData.event_date) {
-            toast.error("Please select a date first");
-            return;
-        }
-        
-        setCheckingAvailability(true);
-        try {
-            const { data } = await api.get('/bookings/check-availability', {
-                params: {
-                    date: formData.event_date,
-                    start_time: formData.start_time,
-                    end_time: formData.end_time,
-                    hall: formData.hall_name
-                }
-            });
-            setIsAvailable(data.available);
-            if (data.available) {
-                toast.success('Hall is available!');
-            } else {
-                toast.error('Hall is already booked for this session.');
-            }
-        } catch (error) {
-            console.error(error);
-            toast.error('Failed to check availability');
-        } finally {
-            setCheckingAvailability(false);
-        }
-    };
+    // Automatic availability check handles the status updates
 
     const submitBooking = async (e) => {
         e.preventDefault();
@@ -124,6 +121,10 @@ const AddEvent = () => {
         if (currentAvailability === null) {
             if (!formData.event_date) {
                 toast.error("Please select a date first");
+                return;
+            }
+            if (!formData.start_time || !formData.end_time) {
+                toast.error("Please select both start and end times");
                 return;
             }
             setLoading(true);
@@ -299,23 +300,30 @@ const AddEvent = () => {
                         </div>
                     </div>
                     
-                    <div className="bg-blue-50/50 border border-blue-100 rounded-xl p-4 flex items-center justify-between">
-                        <span className="text-xs font-semibold text-gray-600">Please check hall availability for the selected date and session.</span>
-                        <div className="flex items-center gap-3">
-                            {isAvailable === true && (
-                                <span className="text-xs font-bold text-green-600 bg-green-100 px-3 py-1.5 rounded-lg">Available</span>
+                    <div className={`border rounded-xl p-4 flex items-center justify-between transition-colors ${
+                        isAvailable === true ? 'bg-green-50/50 border-green-200' :
+                        isAvailable === false ? 'bg-red-50/50 border-red-200' :
+                        'bg-blue-50/50 border-blue-100'
+                    }`}>
+                        <div className="flex items-center gap-2">
+                            {checkingAvailability ? (
+                                <span className="text-xs font-semibold text-blue-600 flex items-center gap-2">
+                                    <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    Checking availability...
+                                </span>
+                            ) : isAvailable === true ? (
+                                <span className="text-xs font-bold text-green-700 flex items-center gap-1.5">
+                                    <Check className="w-4 h-4" /> Hall is Available
+                                </span>
+                            ) : isAvailable === false ? (
+                                <span className="text-xs font-bold text-red-700 flex items-center gap-1.5">
+                                    <AlertCircle className="w-4 h-4" /> Hall is Booked for this time
+                                </span>
+                            ) : (
+                                <span className="text-xs font-semibold text-gray-500">
+                                    Fill in the date and time to automatically check availability.
+                                </span>
                             )}
-                            {isAvailable === false && (
-                                <span className="text-xs font-bold text-red-600 bg-red-100 px-3 py-1.5 rounded-lg">Booked</span>
-                            )}
-                            <button 
-                                type="button"
-                                onClick={checkAvailability}
-                                disabled={checkingAvailability}
-                                className="bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs px-4 py-2 rounded-lg transition-colors cursor-pointer"
-                            >
-                                {checkingAvailability ? 'Checking...' : 'Check Availability'}
-                            </button>
                         </div>
                     </div>
                 </div>

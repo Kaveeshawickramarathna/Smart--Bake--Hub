@@ -25,8 +25,8 @@ const EventBooking = () => {
     const [formData, setFormData] = useState({
         event_type: 'Birthday',
         event_date: '',
-        start_time: '10:00',
-        end_time: '14:00',
+        start_time: '',
+        end_time: '',
         hall_name: 'Grand Ballroom',
         package_name: 'Gold',
         guest_count: 50,
@@ -162,6 +162,10 @@ const EventBooking = () => {
         if (step === 1) {
             if (!formData.event_date) {
                 toast.error("Please select an event date");
+                return;
+            }
+            if (!formData.start_time || !formData.end_time) {
+                toast.error("Please select both start and end times");
                 return;
             }
             if (bookedHalls.includes(formData.hall_name)) {
