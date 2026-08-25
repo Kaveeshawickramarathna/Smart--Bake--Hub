@@ -14,11 +14,11 @@ const AddEvent = () => {
     const [checkingAvailability, setCheckingAvailability] = useState(false);
     const [isAvailable, setIsAvailable] = useState(null);
 
-    // Form State
     const [formData, setFormData] = useState({
         event_type: 'Birthday',
         event_date: '',
-        event_session: 'morning',
+        start_time: '09:00',
+        end_time: '10:00',
         hall_name: 'Grand Ballroom',
         package_name: 'Gold',
         guest_count: 50,
@@ -31,11 +31,6 @@ const AddEvent = () => {
 
     // Configuration Data
     const eventTypes = ['Birthday', 'Wedding', 'Corporate Event', 'Anniversary', 'Party'];
-    const sessions = [
-        { id: 'morning', label: 'Morning Session (8 AM - 2 PM)' },
-        { id: 'evening', label: 'Evening Session (4 PM - 10 PM)' },
-        { id: 'full-day', label: 'Full Day (8 AM - 10 PM)' }
-    ];
     const halls = [
         { id: 'Grand Ballroom', capacity: 300, price: 150000 },
         { id: 'Sapphire Hall', capacity: 150, price: 75000 },
@@ -55,7 +50,7 @@ const AddEvent = () => {
 
     useEffect(() => {
         setIsAvailable(null);
-    }, [formData.event_date, formData.event_session, formData.hall_name]);
+    }, [formData.event_date, formData.start_time, formData.end_time, formData.hall_name]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -91,15 +86,6 @@ const AddEvent = () => {
         return total;
     };
 
-    const getSessionTimes = (session) => {
-        switch(session) {
-            case 'morning': return { start_time: '08:00:00', end_time: '14:00:00' };
-            case 'evening': return { start_time: '16:00:00', end_time: '22:00:00' };
-            case 'full-day': return { start_time: '08:00:00', end_time: '22:00:00' };
-            default: return { start_time: '08:00:00', end_time: '22:00:00' };
-        }
-    };
-
     const checkAvailability = async () => {
         if (!formData.event_date) {
             toast.error("Please select a date first");
@@ -108,12 +94,11 @@ const AddEvent = () => {
         
         setCheckingAvailability(true);
         try {
-            const { start_time, end_time } = getSessionTimes(formData.event_session);
             const { data } = await api.get('/bookings/check-availability', {
                 params: {
                     date: formData.event_date,
-                    start_time,
-                    end_time,
+                    start_time: formData.start_time,
+                    end_time: formData.end_time,
                     hall: formData.hall_name
                 }
             });
@@ -143,12 +128,11 @@ const AddEvent = () => {
             }
             setLoading(true);
             try {
-                const { start_time, end_time } = getSessionTimes(formData.event_session);
                 const { data } = await api.get('/bookings/check-availability', {
                     params: {
                         date: formData.event_date,
-                        start_time,
-                        end_time,
+                        start_time: formData.start_time,
+                        end_time: formData.end_time,
                         hall: formData.hall_name
                     }
                 });
@@ -166,6 +150,7 @@ const AddEvent = () => {
                 setLoading(false);
                 return;
             }
+            setLoading(false); // Clear loading state after successful check before validations
         } else if (currentAvailability === false) {
             toast.error("Please select an available date/session/hall before proceeding");
             return;
@@ -185,8 +170,7 @@ const AddEvent = () => {
         setLoading(true);
         try {
             const total_price = calculateTotal();
-            const { start_time, end_time } = getSessionTimes(formData.event_session);
-            const payload = { ...formData, start_time, end_time, total_price };
+            const payload = { ...formData, total_price };
             
             await api.post('/bookings', payload);
             toast.success('Manual booking created successfully!', { icon: '🎉' });
@@ -279,15 +263,28 @@ const AddEvent = () => {
                             />
                         </div>
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase">Time Session</label>
-                            <select 
-                                name="event_session" 
-                                value={formData.event_session} 
-                                onChange={handleInputChange}
-                                className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#C8843B] transition-colors"
-                            >
-                                {sessions.map(s => <option key={s.id} value={s.id}>{s.label}</option>)}
-                            </select>
+                            <label className="text-xs font-bold text-gray-500 uppercase">Event Time</label>
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="time" 
+                                    name="start_time" 
+                                    min="08:00"
+                                    max="22:00"
+                                    value={formData.start_time} 
+                                    onChange={handleInputChange}
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#C8843B] transition-colors"
+                                />
+                                <span className="text-gray-400 font-bold">to</span>
+                                <input 
+                                    type="time" 
+                                    name="end_time" 
+                                    min="09:00"
+                                    max="23:00"
+                                    value={formData.end_time} 
+                                    onChange={handleInputChange}
+                                    className="w-full bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:border-[#C8843B] transition-colors"
+                                />
+                            </div>
                         </div>
                         <div className="space-y-2">
                             <label className="text-xs font-bold text-gray-500 uppercase">Venue / Hall</label>
