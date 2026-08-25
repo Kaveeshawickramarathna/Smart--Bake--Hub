@@ -36,11 +36,28 @@ const AddEvent = () => {
         { id: 'Sapphire Hall', capacity: 150, price: 75000 },
         { id: 'Ruby Garden', capacity: 100, price: 50000 }
     ];
-    const packages = [
-        { id: 'Gold', name: 'Gold Package', pricePerHead: 2500, desc: 'Standard Buffet + Welcome Drink' },
-        { id: 'Platinum', name: 'Platinum Package', pricePerHead: 3500, desc: 'Premium Buffet + 2 Drinks + Dessert Bar' },
-        { id: 'Diamond', name: 'Diamond Package', pricePerHead: 5000, desc: 'Luxury Buffet + Unlimited Drinks + Special Desserts' }
-    ];
+    const [packages, setPackages] = useState([]);
+    const [loadingPackages, setLoadingPackages] = useState(true);
+
+    useEffect(() => {
+        const fetchPackages = async () => {
+            try {
+                const response = await api.get('/catering');
+                if (response.data.success) {
+                    const activePackages = response.data.data.filter(pkg => pkg.status === 'active');
+                    setPackages(activePackages);
+                    if (activePackages.length > 0) {
+                        setFormData(prev => ({ ...prev, package_name: activePackages[0].name || activePackages[0].id }));
+                    }
+                }
+            } catch (error) {
+                console.error('Failed to fetch catering packages:', error);
+            } finally {
+                setLoadingPackages(false);
+            }
+        };
+        fetchPackages();
+    }, []);
     const availableAddOns = [
         { id: 'cake', name: 'Custom Anniversary/Birthday Cake', price: 12000 },
         { id: 'av', name: 'Pro Audio & Stage Visual Suite', price: 25000 },
@@ -95,9 +112,9 @@ const AddEvent = () => {
 
     const calculateTotal = () => {
         const hall = halls.find(h => h.id === formData.hall_name);
-        const pkg = packages.find(p => p.id === formData.package_name);
+        const pkg = packages.find(p => p.name === formData.package_name || p.id === formData.package_name);
         
-        let total = (hall ? hall.price : 0) + (pkg ? pkg.pricePerHead * formData.guest_count : 0);
+        let total = (hall ? hall.price : 0) + (pkg ? Number(pkg.price || pkg.pricePerHead) * formData.guest_count : 0);
         
         formData.add_ons.forEach(addonId => {
             const addon = availableAddOns.find(a => a.id === addonId);
@@ -346,28 +363,31 @@ const AddEvent = () => {
                         />
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                        {packages.map(pkg => (
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                        {loadingPackages ? (
+                            <div className="col-span-3 text-center py-4 text-gray-500 text-sm">Loading packages...</div>
+                        ) : packages.map(pkg => (
                             <div 
-                                key={pkg.id}
-                                onClick={() => setFormData({...formData, package_name: pkg.id})}
+                                key={pkg.id || pkg.name}
+                                onClick={() => setFormData({...formData, package_name: pkg.name || pkg.id})}
                                 className={`p-4 rounded-xl border-2 transition-all cursor-pointer ${
-                                    formData.package_name === pkg.id 
-                                    ? 'border-[#C8843B] bg-[#FDF6ED] shadow-sm' 
-                                    : 'border-gray-100 bg-white hover:border-[#C8843B]/30'
+                                    formData.package_name === (pkg.name || pkg.id) 
+                                    ? 'border-[#8B4513] bg-[#8B4513]/5' 
+                                    : 'border-gray-200 hover:border-[#8B4513]/30'
                                 }`}
                             >
                                 <div className="flex justify-between items-start mb-2">
-                                    <h4 className="font-bold text-[#2E1A12] text-sm">{pkg.name}</h4>
-                                    {formData.package_name === pkg.id && (
-                                        <div className="w-4 h-4 rounded-full bg-[#C8843B] flex items-center justify-center">
-                                            <Check className="w-2.5 h-2.5 text-white" />
+                                    <h4 className="font-bold text-gray-900">{pkg.name}</h4>
+                                    {formData.package_name === (pkg.name || pkg.id) && (
+                                        <div className="w-5 h-5 rounded-full bg-[#8B4513] flex items-center justify-center">
+                                            <Check className="w-3 h-3 text-white" />
                                         </div>
                                     )}
                                 </div>
-                                <div className="text-lg font-black text-[#C8843B] mb-1">
-                                    Rs. {pkg.pricePerHead.toLocaleString()}
+                                <div className="text-sm font-bold text-[#8B4513]">
+                                    Rs. {Number(pkg.price || pkg.pricePerHead).toLocaleString()} <span className="text-gray-500 font-normal">/ head</span>
                                 </div>
+                                <p className="text-xs text-gray-500 mt-1">{pkg.description || pkg.desc}</p>
                             </div>
                         ))}
                     </div>
