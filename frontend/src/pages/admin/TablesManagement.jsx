@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
     Search, Filter, Plus, MoreHorizontal, LayoutDashboard,
     QrCode, Link as LinkIcon, Edit, Trash2, Settings, ChevronDown, ChevronRight, X
@@ -17,7 +17,14 @@ const TablesManagement = () => {
         { label: 'Available', value: '9', type: 'available' },
     ];
 
-    const [tables, setTables] = useState([]);
+    const [tables, setTables] = useState(() => {
+        const saved = localStorage.getItem('smartBakeHub_tables');
+        return saved ? JSON.parse(saved) : [];
+    });
+
+    useEffect(() => {
+        localStorage.setItem('smartBakeHub_tables', JSON.stringify(tables));
+    }, [tables]);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
     const [newTable, setNewTable] = useState({ number: '', name: '', area: '', menu: 'Autumn', status: 'Enabled' });
