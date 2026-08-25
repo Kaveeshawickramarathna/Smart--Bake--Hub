@@ -98,43 +98,37 @@ const StaffDashboard = () => {
                 // Fetch Orders
                 const ordersRes = await api.get('/orders');
                 const formattedOrders = ordersRes.data.map(o => ({
-                    id: o._id,
-                    displayId: o._id.substring(o._id.length - 4),
-                    customer: o.customerInfo?.name || o.user?.name || 'Customer',
-                    type: o.orderType || 'Takeaway',
-                    items: o.orderItems.map(i => `${i.quantity}x ${i.name}`).join(', '),
+                    id: o.id,
+                    displayId: String(o.id),
+                    customer: o.customer_name || 'Customer',
+                    type: o.order_type || 'Takeaway',
+                    items: o.items || [],
                     priority: o.priority || 'Normal',
-                    elapsed: Math.floor((new Date() - new Date(o.createdAt)) / 60000),
+                    elapsed: Math.floor((new Date() - new Date(o.created_at)) / 60000),
                     est: '15 min',
-                    status: o.orderStatus,
+                    status: o.status,
                     total: o.total_amount || 0
                 }));
                 setOrders(formattedOrders);
 
-                // Fetch Inventory (Products)
-                const inventoryRes = await api.get('/products');
+                // Fetch Inventory Alerts
+                const [inventoryRes, allInventoryRes] = await Promise.all([
+                    api.get('/inventory/alerts'),
+                    api.get('/inventory')
+                ]);
                 const formattedInventory = inventoryRes.data.map(p => {
-                    let status = 'good';
-                    let type = 'In Stock';
-                    if (p.countInStock <= 5) {
-                        status = 'warning';
-                        type = 'Low Stock';
-                    }
-                    if (p.countInStock === 0) {
-                        status = 'critical';
-                        type = 'Out of Stock';
-                    }
                     return {
-                        id: p._id,
-                        name: p.name,
-                        count: p.countInStock,
+                        id: p.id,
+                        name: p.item_name,
+                        count: p.stock_quantity,
                         unit: 'pcs',
-                        type: type,
-                        status: status,
+                        type: p.stock_quantity === 0 ? 'Out of Stock' : 'Low Stock',
+                        status: p.stock_quantity === 0 ? 'critical' : 'warning',
                         trend: 'stable'
                     };
-                }).filter(i => i.status !== 'good'); // Only show low/out of stock
+                });
                 setInventory(formattedInventory);
+                setTotalInventory(allInventoryRes.data.length);
 
                 // Fetch Bookings
                 const bookingsRes = await api.get('/bookings/admin');
@@ -178,12 +172,13 @@ const StaffDashboard = () => {
     };
 
     const kitchenQueue = useMemo(() => {
-        const sorted = [...orders].filter(o => o.status === 'Accepted' || o.status === 'Preparing');
+        const sorted = [...orders].filter(o => o.status === 'accepted' || o.status === 'preparing');
         const priorityWeight = { 'High': 3, 'Medium': 2, 'Normal': 1 };
         return sorted.sort((a, b) => (priorityWeight[b.priority] || 1) - (priorityWeight[a.priority] || 1));
     }, [orders]);
 
     const [inventory, setInventory] = useState([]);
+    const [totalInventory, setTotalInventory] = useState(0);
     const [chats, setChats] = useState([]);
     const [notifications, setNotifications] = useState([
         { id: 1, title: 'New Order Received', desc: 'Order #1087 created by John Doe (Table 3)', time: 'Just now', type: 'info' },
@@ -192,10 +187,10 @@ const StaffDashboard = () => {
 
     const kpiSummary = useMemo(() => {
         return {
-            pending: orders.filter(o => o.status === 'Pending').length,
-            preparing: orders.filter(o => o.status === 'Accepted' || o.status === 'Preparing').length,
-            ready: orders.filter(o => o.status === 'Ready').length,
-            completed: orders.filter(o => o.status === 'Completed').length
+            pending: orders.filter(o => o.status === 'pending').length,
+            preparing: orders.filter(o => o.status === 'accepted' || o.status === 'preparing').length,
+            ready: orders.filter(o => o.status === 'ready').length,
+            completed: orders.filter(o => o.status === 'completed').length
         };
     }, [orders]);
 
@@ -293,7 +288,6 @@ const StaffDashboard = () => {
                             </button>
                             {[
                                 { icon: ShoppingBag, label: 'Orders', id: 'orders' },
-                                { icon: ListTodo, label: 'Kitchen', id: 'kitchen' },
                                 { icon: Box, label: 'Inventory', id: 'inventory' },
                                 { icon: LayoutDashboard, label: 'Tables', id: 'tables' },
                                 { icon: Calendar, label: 'Bookings', id: 'events' },
@@ -399,8 +393,7 @@ const StaffDashboard = () => {
                                 <div 
                                     className="h-full rounded-full bg-gradient-to-r from-[#2E1A12] to-[#C8843B]"
                                     style={{ 
-                                        width: `${Math.round((kpiSummary.pending/orders.length)*100) || 0}%`,
-                                        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px)'
+                                        width: `${orders.length ? Math.round((kpiSummary.pending/orders.length)*100) : 0}%`
                                     }}
                                 ></div>
                             </div>
@@ -422,8 +415,7 @@ const StaffDashboard = () => {
                                 <div 
                                     className="h-full rounded-full bg-gradient-to-r from-[#2E1A12] to-[#C8843B]"
                                     style={{ 
-                                        width: `${Math.round((kpiSummary.preparing/orders.length)*100) || 0}%`,
-                                        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px)'
+                                        width: `${orders.length ? Math.round((kpiSummary.preparing/orders.length)*100) : 0}%`
                                     }}
                                 ></div>
                             </div>
@@ -438,15 +430,14 @@ const StaffDashboard = () => {
                                 <span className="text-3xl font-black text-gray-900">{inventory.length}</span>
                             </div>
                             <div className="flex justify-between items-center text-xs font-bold text-gray-400 mb-2">
-                                <span>Action Required</span>
-                                <span className="text-[#C8843B]">Critical</span>
+                                <span>Total {totalInventory}</span>
+                                <span className="text-gray-900">{totalInventory ? Math.round((inventory.length/totalInventory)*100) : 0}%</span>
                             </div>
                             <div className="w-full h-4 bg-gray-100 rounded-full overflow-hidden">
                                 <div 
                                     className="h-full rounded-full bg-gradient-to-r from-[#2E1A12] to-[#C8843B]"
                                     style={{ 
-                                        width: '40%',
-                                        backgroundImage: 'repeating-linear-gradient(45deg, transparent, transparent 4px, rgba(255,255,255,0.2) 4px, rgba(255,255,255,0.2) 8px)'
+                                        width: `${totalInventory ? Math.round((inventory.length/totalInventory)*100) : 0}%`
                                     }}
                                 ></div>
                             </div>
@@ -510,7 +501,7 @@ const StaffDashboard = () => {
                                         <div>
                                             <div className="text-[11px] font-bold text-gray-400 mb-1">Dine-in Orders</div>
                                             <div className="flex items-center gap-2 text-xl font-black text-gray-900">
-                                                <Store className="w-4 h-4 text-gray-400" /> {orders.filter(o => o.type === 'Dine-in').length || 12}
+                                                <Store className="w-4 h-4 text-gray-400" /> {orders.filter(o => o.type?.toLowerCase() === 'dine-in').length}
                                             </div>
                                         </div>
                                         <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-gray-400 group-hover:text-[#C8843B] shadow-sm">
@@ -522,7 +513,7 @@ const StaffDashboard = () => {
                                         <div>
                                             <div className="text-[11px] font-bold text-[#C8843B] mb-1">Takeaway Orders</div>
                                             <div className="flex items-center gap-2 text-xl font-black text-[#C8843B]">
-                                                <ShoppingBag className="w-4 h-4" /> {orders.filter(o => o.type === 'Takeaway').length || 24}
+                                                <ShoppingBag className="w-4 h-4" /> {orders.filter(o => o.type?.toLowerCase() === 'takeaway').length}
                                             </div>
                                         </div>
                                         <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-[#C8843B] group-hover:text-[#C8843B] shadow-sm">
@@ -534,7 +525,7 @@ const StaffDashboard = () => {
                                         <div>
                                             <div className="text-[11px] font-bold text-gray-400 mb-1">Active Bookings</div>
                                             <div className="flex items-center gap-2 text-xl font-black text-gray-900">
-                                                <Calendar className="w-4 h-4 text-gray-400" /> {bookings.length || 3}
+                                                <Calendar className="w-4 h-4 text-gray-400" /> {bookings.length}
                                             </div>
                                         </div>
                                         <div className="w-6 h-6 bg-white rounded-full flex items-center justify-center text-gray-400 group-hover:text-[#C8843B] shadow-sm">
@@ -633,7 +624,6 @@ const StaffDashboard = () => {
                     )}
 
                     {activeTab === 'orders' && <Orders />}
-                    {activeTab === 'kitchen' && <Orders />}
                     {activeTab === 'inventory' && <InventoryManagement />}
                     {activeTab === 'tables' && <TablesManagement />}
                     {activeTab === 'events' && <Events />}
