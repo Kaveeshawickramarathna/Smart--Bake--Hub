@@ -650,7 +650,7 @@ const StaffDashboard = () => {
             
             <LogoutConfirmation 
                 isOpen={showLogoutModal} 
-                onClose={() => setShowLogoutModal(false)} 
+                onCancel={() => setShowLogoutModal(false)} 
                 onConfirm={handleConfirmLogout} 
             />
         </div>
