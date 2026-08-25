@@ -91,6 +91,15 @@ const AddEvent = () => {
         return total;
     };
 
+    const getSessionTimes = (session) => {
+        switch(session) {
+            case 'morning': return { start_time: '08:00:00', end_time: '14:00:00' };
+            case 'evening': return { start_time: '16:00:00', end_time: '22:00:00' };
+            case 'full-day': return { start_time: '08:00:00', end_time: '22:00:00' };
+            default: return { start_time: '08:00:00', end_time: '22:00:00' };
+        }
+    };
+
     const checkAvailability = async () => {
         if (!formData.event_date) {
             toast.error("Please select a date first");
@@ -99,10 +108,12 @@ const AddEvent = () => {
         
         setCheckingAvailability(true);
         try {
+            const { start_time, end_time } = getSessionTimes(formData.event_session);
             const { data } = await api.get('/bookings/check-availability', {
                 params: {
                     date: formData.event_date,
-                    session: formData.event_session,
+                    start_time,
+                    end_time,
                     hall: formData.hall_name
                 }
             });
@@ -123,12 +134,40 @@ const AddEvent = () => {
     const submitBooking = async (e) => {
         e.preventDefault();
 
-        if (isAvailable === false) {
+        let currentAvailability = isAvailable;
+
+        if (currentAvailability === null) {
+            if (!formData.event_date) {
+                toast.error("Please select a date first");
+                return;
+            }
+            setLoading(true);
+            try {
+                const { start_time, end_time } = getSessionTimes(formData.event_session);
+                const { data } = await api.get('/bookings/check-availability', {
+                    params: {
+                        date: formData.event_date,
+                        start_time,
+                        end_time,
+                        hall: formData.hall_name
+                    }
+                });
+                setIsAvailable(data.available);
+                currentAvailability = data.available;
+                
+                if (!data.available) {
+                    toast.error('Hall is already booked for this session.');
+                    setLoading(false);
+                    return;
+                }
+            } catch (error) {
+                console.error(error);
+                toast.error('Failed to check availability automatically');
+                setLoading(false);
+                return;
+            }
+        } else if (currentAvailability === false) {
             toast.error("Please select an available date/session/hall before proceeding");
-            return;
-        }
-        if (isAvailable === null) {
-            toast.error("Please check availability first");
             return;
         }
 
@@ -146,7 +185,8 @@ const AddEvent = () => {
         setLoading(true);
         try {
             const total_price = calculateTotal();
-            const payload = { ...formData, total_price };
+            const { start_time, end_time } = getSessionTimes(formData.event_session);
+            const payload = { ...formData, start_time, end_time, total_price };
             
             await api.post('/bookings', payload);
             toast.success('Manual booking created successfully!', { icon: '🎉' });
