@@ -30,7 +30,7 @@ const AddEvent = () => {
     });
 
     // Configuration Data
-    const eventTypes = ['Birthday', 'Wedding', 'Corporate Event', 'Anniversary', 'Party'];
+    const eventTypes = ['Birthday', 'Corporate Event', 'Anniversary', 'Party'];
     const halls = [
         { id: 'Grand Ballroom', capacity: 300, price: 150000 },
         { id: 'Sapphire Hall', capacity: 150, price: 75000 },

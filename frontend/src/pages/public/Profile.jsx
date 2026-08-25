@@ -270,9 +270,11 @@ const Profile = () => {
                                         <div className="space-y-4">
                                             {orders.map(order => {
                                                 const totalQuantity = order.items?.reduce((acc, item) => acc + (item.quantity || 1), 0) || 0;
-                                                let prepTimeMinutes = 60;
-                                                if (totalQuantity >= 3 && totalQuantity <= 4) prepTimeMinutes = 90;
-                                                else if (totalQuantity > 4) prepTimeMinutes = 120;
+                                                let prepTimeMinutes = order.prep_time || 60;
+                                                if (!order.prep_time) {
+                                                    if (totalQuantity >= 3 && totalQuantity <= 4) prepTimeMinutes = 90;
+                                                    else if (totalQuantity > 4) prepTimeMinutes = 120;
+                                                }
                                                 
                                                 const readyTime = new Date(new Date(order.created_at).getTime() + prepTimeMinutes * 60000);
                                                 const isFinalStatus = ['ready', 'completed', 'cancelled'].includes(order.status);
