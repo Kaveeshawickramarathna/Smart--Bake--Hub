@@ -3,8 +3,13 @@ import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, Save, Plus, X } from 'lucide-react';
 import api from '../../services/api';
 
-const AddCateringPackage = () => {
+const AddCateringPackage = ({ onBack }) => {
     const navigate = useNavigate();
+
+    const handleBack = () => {
+        if (onBack) onBack();
+        else navigate('/admin/catering-packages');
+    };
     const [loading, setLoading] = useState(false);
     
     const [formData, setFormData] = useState({
@@ -58,7 +63,8 @@ const AddCateringPackage = () => {
             });
 
             if (response.data.success) {
-                navigate('/admin/catering-packages');
+                toast.success('Package added successfully!');
+                handleBack();
             }
         } catch (error) {
             console.error('Failed to create package:', error);
@@ -73,7 +79,7 @@ const AddCateringPackage = () => {
             {/* Header */}
             <div className="flex items-center gap-4">
                 <button 
-                    onClick={() => navigate('/admin/catering-packages')}
+                    onClick={handleBack}
                     className="p-2 hover:bg-white rounded-lg transition-colors border border-transparent hover:border-gray-200"
                 >
                     <ArrowLeft className="w-5 h-5 text-gray-500" />

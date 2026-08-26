@@ -1,12 +1,13 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { Plus, Edit2, Trash2, Search, Filter, Check, X } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import DeleteConfirmation from '../../components/DeleteConfirmation';
 import { mockMenuCategories, mockMenus } from '../../data/mockMenus';
 
-const ProductMenuManagement = () => {
+const ProductMenuManagement = ({ onNavigateToAdd }) => {
+    const navigate = useNavigate();
     // Menus States
     const [menus, setMenus] = useState([]);
     const [menuCategories, setMenuCategories] = useState([]);
@@ -106,13 +107,16 @@ const ProductMenuManagement = () => {
                     <h1 className="text-3xl font-bold text-[#2E1A12] font-serif">Dish Management</h1>
                     <p className="text-[#2E1A12]/60 text-sm mt-1">Create and manage dishes for your customers</p>
                 </div>
-                <Link
-                    to="/admin/menus/add"
-                    className="flex items-center gap-2 px-5 py-2.5 bg-[#2E1A12] text-white rounded-xl hover:bg-[#2E1A12]/90 transition-all duration-300 shadow-md hover:-translate-y-0.5"
+                <button
+                    onClick={() => {
+                        if (onNavigateToAdd) onNavigateToAdd();
+                        else navigate('/admin/menus/add');
+                    }}
+                    className="flex items-center gap-2 px-5 py-2.5 bg-[#2E1A12] text-white rounded-xl hover:bg-[#2E1A12]/90 transition-all duration-300 shadow-md hover:-translate-y-0.5 cursor-pointer"
                 >
                     <Plus className="w-5 h-5" />
                     <span className="font-semibold text-sm">Add Dish</span>
-                </Link>
+                </button>
             </div>
 
             {/* Search & Filter */}
