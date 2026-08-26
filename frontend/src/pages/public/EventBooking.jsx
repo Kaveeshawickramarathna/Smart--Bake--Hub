@@ -188,7 +188,18 @@ const EventBooking = () => {
         
         formData.add_ons.forEach(addonId => {
             const addon = availableAddOns.find(a => a.id === addonId);
-            if (addon) total += Number(addon.price);
+            if (addon) {
+                if (addon.id === 'cake' && cakeCustomization.design) {
+                    const selectedDesign = cakeDesigns.find(d => d.id === Number(cakeCustomization.design));
+                    const hasOptions = selectedDesign?.pricing_options && selectedDesign.pricing_options.length > 0;
+                    const currentVariant = hasOptions 
+                        ? selectedDesign.pricing_options[cakeCustomization.variantIndex || 0] 
+                        : selectedDesign;
+                    total += currentVariant?.price ? Number(currentVariant.price) : 0;
+                } else if (addon.id !== 'cake') {
+                    total += Number(addon.price);
+                }
+            }
         });
 
         return total;
@@ -494,6 +505,24 @@ const EventBooking = () => {
                                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                             {availableAddOns.map(addon => {
                                                 const isSelected = formData.add_ons.includes(addon.id);
+                                                let displayPrice = `Rs. ${Number(addon.price).toLocaleString()}`;
+                                                
+                                                if (addon.id === 'cake') {
+                                                    if (cakeCustomization.design) {
+                                                        const selectedDesign = cakeDesigns.find(d => d.id === Number(cakeCustomization.design));
+                                                        const hasOptions = selectedDesign?.pricing_options && selectedDesign.pricing_options.length > 0;
+                                                        const currentVariant = hasOptions 
+                                                            ? selectedDesign.pricing_options[cakeCustomization.variantIndex || 0] 
+                                                            : selectedDesign;
+                                                        
+                                                        if (currentVariant?.price) {
+                                                            displayPrice = `Rs. ${Number(currentVariant.price).toLocaleString()}`;
+                                                        }
+                                                    } else {
+                                                        displayPrice = isSelected ? 'Select Design' : 'From Rs. 2,000';
+                                                    }
+                                                }
+
                                                 return (
                                                     <div key={addon.id} className="flex flex-col gap-2">
                                                         <div 
@@ -512,7 +541,7 @@ const EventBooking = () => {
                                                                 </div>
                                                                 <span className="text-sm font-semibold text-[#2E1A12]">{addon.name}</span>
                                                             </div>
-                                                            <span className="text-xs font-bold text-[#C8843B]">Rs. {Number(addon.price).toLocaleString()}</span>
+                                                            <span className="text-xs font-bold text-[#C8843B]">{displayPrice}</span>
                                                         </div>
                                                         
                                                         {isSelected && addon.id === 'cake' && (
