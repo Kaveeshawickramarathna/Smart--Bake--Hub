@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
     Calendar, Users, MapPin, Package, Check, 
-    ArrowLeft, Send, Sparkles, AlertCircle
+    ArrowLeft, Send, Sparkles, AlertCircle, X, Image as ImageIcon
 } from 'lucide-react';
+
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -14,10 +16,21 @@ const AddEvent = ({ onBack }) => {
     const [checkingAvailability, setCheckingAvailability] = useState(false);
     const [isAvailable, setIsAvailable] = useState(null);
 
-    const handleBack = () => {
-        if (onBack) onBack();
-        else navigate('/admin/events');
-    };
+const handleBack = () => {
+    if (onBack) onBack();
+    else navigate('/admin/events');
+};
+
+const [isCakeModalOpen, setIsCakeModalOpen] = useState(false);
+const [cakeCustomization, setCakeCustomization] = useState({
+    design: '',
+    flavor: 'Chocolate',
+    icing: 'Buttercream',
+    weight: '1kg',
+    shape: 'Round',
+    message: '',
+    specialInstructions: ''
+});
 
     const [formData, setFormData] = useState({
         event_type: 'Birthday',
@@ -43,6 +56,10 @@ const AddEvent = ({ onBack }) => {
     ];
     const [packages, setPackages] = useState([]);
     const [loadingPackages, setLoadingPackages] = useState(true);
+    const [availableAddOns, setAvailableAddOns] = useState([]);
+    const [loadingAddOns, setLoadingAddOns] = useState(true);
+    const [cakeDesigns, setCakeDesigns] = useState([]);
+    const [cakeOptions, setCakeOptions] = useState([]);
 
     useEffect(() => {
         const fetchPackages = async () => {
@@ -61,14 +78,55 @@ const AddEvent = ({ onBack }) => {
                 setLoadingPackages(false);
             }
         };
+        const fetchAddOns = async () => {
+            try {
+                const response = await api.get('/addons');
+                if (response.data.success) {
+                    const activeAddOns = response.data.data.filter(addon => addon.status === 'active');
+                    setAvailableAddOns(activeAddOns);
+                }
+            } catch (error) {
+                console.error('Failed to fetch add-ons:', error);
+            } finally {
+                setLoadingAddOns(false);
+            }
+        };
+        const fetchCakeData = async () => {
+            try {
+                const [designsRes, optionsRes] = await Promise.all([
+                    api.get('/cake-designs'),
+                    api.get('/cake-options')
+                ]);
+                
+                if (designsRes.data.success) {
+                    setCakeDesigns(designsRes.data.data.filter(d => d.status === 'active'));
+                }
+                if (optionsRes.data.success) {
+                    const activeOpts = optionsRes.data.data.filter(o => o.status === 'active');
+                    setCakeOptions(activeOpts);
+                    
+                    // Set defaults based on first active option of each category
+                    const defaultFlavor = activeOpts.find(o => o.category === 'flavor')?.value || '';
+                    const defaultIcing = activeOpts.find(o => o.category === 'icing')?.value || '';
+                    const defaultWeight = activeOpts.find(o => o.category === 'weight')?.value || '';
+                    const defaultShape = activeOpts.find(o => o.category === 'shape')?.value || '';
+                    
+                    setCakeCustomization(prev => ({
+                        ...prev,
+                        flavor: defaultFlavor,
+                        icing: defaultIcing,
+                        weight: defaultWeight,
+                        shape: defaultShape
+                    }));
+                }
+            } catch (error) {
+                console.error('Failed to fetch cake data:', error);
+            }
+        };
         fetchPackages();
+        fetchAddOns();
+        fetchCakeData();
     }, []);
-    const availableAddOns = [
-        { id: 'cake', name: 'Custom Anniversary/Birthday Cake', price: 12000 },
-        { id: 'av', name: 'Pro Audio & Stage Visual Suite', price: 25000 },
-        { id: 'live', name: 'Live Hopper & Kottu Stations', price: 15000 },
-        { id: 'photo', name: 'Official Event Photography', price: 30000 }
-    ];
 
     useEffect(() => {
         const checkAutoAvailability = async () => {
@@ -123,7 +181,7 @@ const AddEvent = ({ onBack }) => {
         
         formData.add_ons.forEach(addonId => {
             const addon = availableAddOns.find(a => a.id === addonId);
-            if (addon) total += addon.price;
+            if (addon) total += Number(addon.price);
         });
 
         if (formData.event_session === 'full-day') {
@@ -193,9 +251,17 @@ const AddEvent = ({ onBack }) => {
         setLoading(true);
         try {
             const total_price = calculateTotal();
-            const payload = { ...formData, total_price };
+            let finalSpecialNotes = formData.special_notes;
             
-            await api.post('/bookings', payload);
+            if (formData.add_ons.includes('cake')) {
+                const designName = cakeDesigns.find(d => d.id === cakeCustomization.design)?.name || 'Custom/No Design';
+                const cakeDetails = `\n\n--- Cake Customization ---\nDesign: ${designName}\nFlavor: ${cakeCustomization.flavor}\nIcing: ${cakeCustomization.icing}\nWeight: ${cakeCustomization.weight}\nShape: ${cakeCustomization.shape}\nMessage: ${cakeCustomization.message || 'N/A'}\nInstructions: ${cakeCustomization.specialInstructions || 'N/A'}`;
+                finalSpecialNotes = finalSpecialNotes ? finalSpecialNotes + cakeDetails : cakeDetails;
+            }
+
+            const payload = { ...formData, special_notes: finalSpecialNotes, total_price };
+            
+            await api.post('/bookings/manual', payload);
             toast.success('Manual booking created successfully!', { icon: '🎉' });
             handleBack();
         } catch (error) {
@@ -401,24 +467,35 @@ const AddEvent = ({ onBack }) => {
                         {availableAddOns.map(addon => {
                             const isSelected = formData.add_ons.includes(addon.id);
                             return (
-                                <div 
-                                    key={addon.id}
-                                    onClick={() => handleAddOnToggle(addon.id)}
-                                    className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
-                                        isSelected 
-                                        ? 'border-[#C8843B] bg-white shadow-sm' 
-                                        : 'border-gray-100 bg-gray-50/50 hover:bg-white'
-                                    }`}
-                                >
-                                    <div className="flex items-center gap-3">
-                                        <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
-                                            isSelected ? 'bg-[#C8843B] border-[#C8843B]' : 'bg-white border-gray-300'
-                                        }`}>
-                                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                                <div key={addon.id} className="flex flex-col gap-2">
+                                    <div 
+                                        onClick={() => handleAddOnToggle(addon.id)}
+                                        className={`flex items-center justify-between p-3 rounded-xl border transition-all cursor-pointer ${
+                                            isSelected 
+                                            ? 'border-[#C8843B] bg-white shadow-sm' 
+                                            : 'border-gray-100 bg-gray-50/50 hover:bg-white'
+                                        }`}
+                                    >
+                                        <div className="flex items-center gap-3">
+                                            <div className={`w-4 h-4 rounded border flex items-center justify-center transition-colors ${
+                                                isSelected ? 'bg-[#C8843B] border-[#C8843B]' : 'bg-white border-gray-300'
+                                            }`}>
+                                                {isSelected && <Check className="w-3 h-3 text-white" />}
+                                            </div>
+                                            <span className="text-sm font-semibold text-[#2E1A12]">{addon.name}</span>
                                         </div>
-                                        <span className="text-sm font-semibold text-[#2E1A12]">{addon.name}</span>
+                                        <span className="text-xs font-bold text-[#C8843B]">Rs. {Number(addon.price).toLocaleString()}</span>
                                     </div>
-                                    <span className="text-xs font-bold text-[#C8843B]">Rs. {addon.price.toLocaleString()}</span>
+
+                                    {isSelected && addon.id === 'cake' && (
+                                        <button 
+                                            type="button"
+                                            onClick={(e) => { e.stopPropagation(); setIsCakeModalOpen(true); }}
+                                            className="ml-8 mr-2 py-1.5 px-3 bg-[#FDF6ED] border border-[#C8843B]/30 rounded-lg text-xs font-bold text-[#C8843B] hover:bg-[#C8843B] hover:text-white transition-colors flex items-center justify-center gap-2"
+                                        >
+                                            <Sparkles className="w-3.5 h-3.5" /> Cake
+                                        </button>
+                                    )}
                                 </div>
                             );
                         })}
@@ -453,6 +530,142 @@ const AddEvent = ({ onBack }) => {
                     </button>
                 </div>
             </form>
+
+            {/* CAKE CUSTOMIZATION MODAL */}
+            {isCakeModalOpen && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-amber-50/30">
+                            <div>
+                                <h2 className="text-xl font-bold font-serif text-[#2E1A12]">Cake</h2>
+                                <p className="text-xs text-gray-500 mt-1">Design the perfect cake for the event</p>
+                            </div>
+                            <button type="button" onClick={() => setIsCakeModalOpen(false)} className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-sm">
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+                        
+                        <div className="p-6 overflow-y-auto space-y-5 custom-scrollbar">
+                            {/* Cake Designs Selection */}
+                            <div className="space-y-3">
+                                <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
+                                    <ImageIcon className="w-4 h-4" /> Select a Design
+                                </label>
+                                <div className="flex gap-4 overflow-x-auto pb-4 pt-1 snap-x scrollbar-thin scrollbar-thumb-gray-200">
+                                    {cakeDesigns.map((design) => (
+                                        <div 
+                                            key={design.id}
+                                            onClick={() => setCakeCustomization({...cakeCustomization, design: design.id})}
+                                            className={`min-w-[120px] cursor-pointer rounded-xl overflow-hidden border-2 transition-all snap-start ${
+                                                cakeCustomization.design === design.id 
+                                                ? 'border-[#C8843B] shadow-md transform scale-105' 
+                                                : 'border-transparent opacity-70 hover:opacity-100 hover:scale-105'
+                                            }`}
+                                        >
+                                            <div className="aspect-square bg-gray-100">
+                                                <img src={`${BASE_URL}${design.image_url}`} alt={design.name} className="w-full h-full object-cover" />
+                                            </div>
+                                            <div className={`p-2 text-center text-xs font-bold truncate ${cakeCustomization.design === design.id ? 'bg-[#C8843B] text-white' : 'bg-gray-100 text-gray-600'}`}>
+                                                {design.name}
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {cakeDesigns.length === 0 && (
+                                        <div className="text-sm text-gray-400 italic py-2">No active cake designs available.</div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Flavor</label>
+                                    <select 
+                                        value={cakeCustomization.flavor}
+                                        onChange={(e) => setCakeCustomization({...cakeCustomization, flavor: e.target.value})}
+                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-[#C8843B] focus:outline-none"
+                                    >
+                                        <option value="">Select Flavor</option>
+                                        {cakeOptions.filter(o => o.category === 'flavor').map(opt => (
+                                            <option key={opt.id} value={opt.value}>{opt.value}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Icing Type</label>
+                                    <select 
+                                        value={cakeCustomization.icing}
+                                        onChange={(e) => setCakeCustomization({...cakeCustomization, icing: e.target.value})}
+                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-[#C8843B] focus:outline-none"
+                                    >
+                                        <option value="">Select Icing</option>
+                                        {cakeOptions.filter(o => o.category === 'icing').map(opt => (
+                                            <option key={opt.id} value={opt.value}>{opt.value}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Weight</label>
+                                    <select 
+                                        value={cakeCustomization.weight}
+                                        onChange={(e) => setCakeCustomization({...cakeCustomization, weight: e.target.value})}
+                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-[#C8843B] focus:outline-none"
+                                    >
+                                        <option value="">Select Weight</option>
+                                        {cakeOptions.filter(o => o.category === 'weight').map(opt => (
+                                            <option key={opt.id} value={opt.value}>{opt.value}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <div className="space-y-2">
+                                    <label className="text-xs font-bold text-gray-500 uppercase">Shape</label>
+                                    <select 
+                                        value={cakeCustomization.shape}
+                                        onChange={(e) => setCakeCustomization({...cakeCustomization, shape: e.target.value})}
+                                        className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-[#C8843B] focus:outline-none"
+                                    >
+                                        <option value="">Select Shape</option>
+                                        {cakeOptions.filter(o => o.category === 'shape').map(opt => (
+                                            <option key={opt.id} value={opt.value}>{opt.value}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Message on Cake</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="e.g. Happy Birthday John!"
+                                    value={cakeCustomization.message}
+                                    onChange={(e) => setCakeCustomization({...cakeCustomization, message: e.target.value})}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-[#C8843B] focus:outline-none"
+                                />
+                            </div>
+                            
+                            <div className="space-y-2">
+                                <label className="text-xs font-bold text-gray-500 uppercase">Special Instructions / Theme</label>
+                                <textarea 
+                                    rows="3"
+                                    placeholder="Any specific colors, themes, or design details?"
+                                    value={cakeCustomization.specialInstructions}
+                                    onChange={(e) => setCakeCustomization({...cakeCustomization, specialInstructions: e.target.value})}
+                                    className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:border-[#C8843B] focus:outline-none resize-none"
+                                ></textarea>
+                            </div>
+                        </div>
+                        
+                        <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+                            <button 
+                                type="button"
+                                onClick={() => setIsCakeModalOpen(false)}
+                                className="px-6 py-2.5 bg-[#2E1A12] text-white rounded-xl text-sm font-bold shadow hover:bg-[#C8843B] transition-colors"
+                            >
+                                Save Customization
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };

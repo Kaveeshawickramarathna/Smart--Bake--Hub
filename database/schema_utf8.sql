@@ -106,11 +106,14 @@ CREATE TABLE `bookings` (
   `status` varchar(50) DEFAULT 'pending',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `cake_design_id` int DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `user_id` (`user_id`),
+  KEY `fk_bookings_cake_design` (`cake_design_id`),
   CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
-  CONSTRAINT `bookings_chk_1` CHECK ((`status` in (_latin1'pending',_latin1'approved',_latin1'cancelled')))
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+  CONSTRAINT `fk_bookings_cake_design` FOREIGN KEY (`cake_design_id`) REFERENCES `cake_designs` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `bookings_chk_1` CHECK ((`status` in (_utf8mb4'pending',_utf8mb4'approved',_utf8mb4'cancelled')))
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -119,8 +122,65 @@ CREATE TABLE `bookings` (
 
 LOCK TABLES `bookings` WRITE;
 /*!40000 ALTER TABLE `bookings` DISABLE KEYS */;
-INSERT INTO `bookings` VALUES (1,20,'Test','test@test.com','1234567890','Birthday','2026-09-01','Custom','09:00:00','10:00:00',50,'Grand Ballroom','Gold','[]',275000.00,NULL,'cancelled','2026-08-25 14:07:18','2026-08-25 14:07:18'),(2,20,'vijitha','kusum@gmail.com','0342255762','Wedding','2026-08-28','Custom','10:00:00','11:00:00',50,'Sapphire Hall','Gold','[\"cake\"]',212000.00,NULL,'pending','2026-08-25 15:02:56','2026-08-25 15:02:56'),(3,20,'kusum','kusum@gmail.com','0765467345','Anniversary','2026-09-06','Custom','20:30:00','22:00:00',50,'Grand Ballroom','Platinum','[\"av\"]',350000.00,NULL,'approved','2026-08-25 15:08:22','2026-08-25 15:08:22');
+INSERT INTO `bookings` VALUES (1,20,'Test','test@test.com','1234567890','Birthday','2026-09-01','Custom','09:00:00','10:00:00',50,'Grand Ballroom','Gold','[]',275000.00,NULL,'cancelled','2026-08-25 14:07:18','2026-08-25 14:07:18',NULL),(2,20,'vijitha','kusum@gmail.com','0342255762','Wedding','2026-08-28','Custom','10:00:00','11:00:00',50,'Sapphire Hall','Gold','[\"cake\"]',212000.00,NULL,'pending','2026-08-25 15:02:56','2026-08-25 15:02:56',NULL),(3,20,'kusum','kusum@gmail.com','0765467345','Anniversary','2026-09-06','Custom','20:30:00','22:00:00',50,'Grand Ballroom','Platinum','[\"av\"]',350000.00,NULL,'approved','2026-08-25 15:08:22','2026-08-25 15:08:22',NULL),(4,21,'chamodi','chamodiumayangana2001@gmail.com','0740962069','Birthday','2026-08-29','Custom','19:06:00','20:07:00',50,'Grand Ballroom','Gold Package ','[\"cake\"]',287000.00,'\n\n--- Cake Customization ---\nDesign: Design 01\nFlavor: Red Velvet\nIcing: Buttercream\nWeight: 1kg\nShape: Square\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 13:37:43','2026-08-26 13:37:43',NULL),(5,21,'chamodi','chamodiumayangana2001@gmail.com','0740962060','Birthday','2026-08-28','Custom','20:16:00','20:17:00',50,'Sapphire Hall','Gold Package ','[\"cake\"]',212000.00,'\n\n--- Cake Customization ---\nDesign: Design 01\nFlavor: Vanilla\nIcing: Fondant\nWeight: 2kg\nShape: Heart\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 13:47:37','2026-08-26 13:47:37',NULL),(6,21,'chamodi','chamodiumayangana2001@gmail.com','0740962060','Birthday','2026-09-04','Custom','09:00:00','22:00:00',50,'Grand Ballroom','Gold Package ','[\"cake\"]',287000.00,'\n\n--- Cake Details ---\nDesign: Design 01\nWeight: 1.00 kg\nPrice: Rs. 3000.00\nMessage: happy birthday janu\nInstructions: N/A','pending','2026-08-26 15:47:54','2026-08-26 15:47:54',NULL),(7,21,'chamodi','chamodiumayangana2001@gmail.com','0778638094','Birthday','2026-08-29','Custom','19:00:00','21:57:00',50,'Sapphire Hall','Gold Package ','[\"cake\"]',212000.00,'\n\n--- Cake Details ---\nDesign: Design 01\nWeight: 1.5 kg\nPrice: Rs. 3000\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 16:27:47','2026-08-26 16:27:47',NULL);
 /*!40000 ALTER TABLE `bookings` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `cake_designs`
+--
+
+DROP TABLE IF EXISTS `cake_designs`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `cake_designs` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `name` varchar(255) NOT NULL,
+  `image_url` varchar(255) NOT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  `weight_kg` decimal(5,2) DEFAULT NULL,
+  `price` decimal(10,2) DEFAULT NULL,
+  `pricing_options` json DEFAULT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cake_designs`
+--
+
+LOCK TABLES `cake_designs` WRITE;
+/*!40000 ALTER TABLE `cake_designs` DISABLE KEYS */;
+INSERT INTO `cake_designs` VALUES (4,'Design 01','/uploads/1787761069517-404092503.jpg','active','2026-08-26 16:17:49',NULL,NULL,'[{\"price\": \"2500\", \"weight_kg\": \"1\"}, {\"price\": \"3000\", \"weight_kg\": \"1.5\"}]');
+/*!40000 ALTER TABLE `cake_designs` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
+-- Table structure for table `cake_options`
+--
+
+DROP TABLE IF EXISTS `cake_options`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `cake_options` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `category` enum('flavor','icing','weight','shape') NOT NULL,
+  `value` varchar(255) NOT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB AUTO_INCREMENT=18 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `cake_options`
+--
+
+LOCK TABLES `cake_options` WRITE;
+/*!40000 ALTER TABLE `cake_options` DISABLE KEYS */;
+INSERT INTO `cake_options` VALUES (1,'flavor','Chocolate','active','2026-08-26 14:04:06'),(2,'flavor','Vanilla','active','2026-08-26 14:04:06'),(3,'flavor','Red Velvet','active','2026-08-26 14:04:06'),(4,'flavor','Ribbon','active','2026-08-26 14:04:06'),(5,'flavor','Butter','active','2026-08-26 14:04:06'),(6,'icing','Buttercream','active','2026-08-26 14:04:06'),(7,'icing','Fondant','active','2026-08-26 14:04:06'),(8,'icing','Chocolate Ganache','active','2026-08-26 14:04:06'),(9,'icing','Fresh Cream','active','2026-08-26 14:04:06'),(10,'weight','1kg','active','2026-08-26 14:04:06'),(11,'weight','1.5kg','active','2026-08-26 14:04:06'),(12,'weight','2kg','active','2026-08-26 14:04:06'),(13,'weight','3kg','active','2026-08-26 14:04:06'),(14,'weight','5kg','active','2026-08-26 14:04:06'),(15,'shape','Round','active','2026-08-26 14:04:06'),(16,'shape','Square','active','2026-08-26 14:04:06'),(17,'shape','Heart','active','2026-08-26 14:04:06');
+/*!40000 ALTER TABLE `cake_options` ENABLE KEYS */;
 UNLOCK TABLES;
 
 --
@@ -379,6 +439,33 @@ INSERT INTO `orders` VALUES (1,21,1200.00,'takeaway',NULL,'pending','2026-08-25 
 UNLOCK TABLES;
 
 --
+-- Table structure for table `premium_addons`
+--
+
+DROP TABLE IF EXISTS `premium_addons`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `premium_addons` (
+  `id` varchar(50) NOT NULL,
+  `name` varchar(255) NOT NULL,
+  `price` decimal(10,2) NOT NULL,
+  `status` enum('active','inactive') DEFAULT 'active',
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `premium_addons`
+--
+
+LOCK TABLES `premium_addons` WRITE;
+/*!40000 ALTER TABLE `premium_addons` DISABLE KEYS */;
+INSERT INTO `premium_addons` VALUES ('bbq','Live BBQ Station',15000.00,'active','2026-08-25 17:54:32'),('cake','Cake',12000.00,'active','2026-08-26 13:21:48'),('hoppers','Live Hoppers Station',10000.00,'active','2026-08-25 17:54:32'),('kottu','Live Kottu Station',12000.00,'active','2026-08-25 17:54:32');
+/*!40000 ALTER TABLE `premium_addons` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `product_categories`
 --
 
@@ -486,4 +573,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-25 16:45:13
+-- Dump completed on 2026-08-26 17:24:25

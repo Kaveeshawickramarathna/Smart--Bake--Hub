@@ -37,6 +37,8 @@ import BeveragesManagement from './pages/admin/BeveragesManagement';
 import AddBeverage from './pages/admin/AddBeverage';
 import CateringPackages from './pages/admin/CateringPackages';
 import AddCateringPackage from './pages/admin/AddCateringPackage';
+import PremiumAddons from './pages/admin/PremiumAddons';
+import CakeDesigns from './pages/admin/CakeDesigns';
 import Events from './pages/admin/Events';
 import AddEvent from './pages/admin/AddEvent';
 import Settings from './pages/admin/Settings';
@@ -142,6 +144,8 @@ function App() {
                     <Route path="beverages/add" element={<AddBeverage />} />
                     <Route path="catering-packages" element={<CateringPackages />} />
                     <Route path="catering-packages/add" element={<AddCateringPackage />} />
+                    <Route path="premium-addons" element={<PremiumAddons />} />
+                    <Route path="cake-designs" element={<CakeDesigns />} />
                     <Route path="ai/waste" element={<WasteReduction />} />
                     <Route path="events" element={<Events />} />
                     <Route path="events/add" element={<AddEvent />} />
