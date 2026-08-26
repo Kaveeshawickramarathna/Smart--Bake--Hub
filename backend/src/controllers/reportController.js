@@ -119,16 +119,15 @@ const getInventoryReport = async (req, res) => {
 
 const getBookingReport = async (req, res) => {
     try {
-        const [totalBookings] = await pool.query('SELECT COUNT(*) as total FROM event_bookings');
-        const [approvedBookings] = await pool.query('SELECT COUNT(*) as total FROM event_bookings WHERE booking_status = "approved"');
+        const [totalBookings] = await pool.query('SELECT COUNT(*) as total FROM bookings');
+        const [approvedBookings] = await pool.query('SELECT COUNT(*) as total FROM bookings WHERE status = "approved"');
         
         // Upcoming bookings
         const [upcoming] = await pool.query(`
-            SELECT eb.event_date, ep.name as event_type, eb.guest_count as number_of_guests 
-            FROM event_bookings eb
-            LEFT JOIN event_packages ep ON eb.event_package_id = ep.id
-            WHERE eb.event_date >= DATE(NOW()) AND eb.booking_status = "approved" 
-            ORDER BY eb.event_date ASC 
+            SELECT event_date, event_type, guest_count as number_of_guests 
+            FROM bookings 
+            WHERE event_date >= DATE(NOW()) AND status != "cancelled" 
+            ORDER BY event_date ASC 
             LIMIT 5
         `);
 
