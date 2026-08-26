@@ -113,7 +113,7 @@ CREATE TABLE `bookings` (
   CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_bookings_cake_design` FOREIGN KEY (`cake_design_id`) REFERENCES `cake_designs` (`id`) ON DELETE SET NULL,
   CONSTRAINT `bookings_chk_1` CHECK ((`status` in (_utf8mb4'pending',_utf8mb4'approved',_utf8mb4'cancelled')))
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -122,7 +122,7 @@ CREATE TABLE `bookings` (
 
 LOCK TABLES `bookings` WRITE;
 /*!40000 ALTER TABLE `bookings` DISABLE KEYS */;
-INSERT INTO `bookings` VALUES (1,20,'Test','test@test.com','1234567890','Birthday','2026-09-01','Custom','09:00:00','10:00:00',50,'Grand Ballroom','Gold','[]',275000.00,NULL,'cancelled','2026-08-25 14:07:18','2026-08-25 14:07:18',NULL),(2,20,'vijitha','kusum@gmail.com','0342255762','Wedding','2026-08-28','Custom','10:00:00','11:00:00',50,'Sapphire Hall','Gold','[\"cake\"]',212000.00,NULL,'pending','2026-08-25 15:02:56','2026-08-25 15:02:56',NULL),(3,20,'kusum','kusum@gmail.com','0765467345','Anniversary','2026-09-06','Custom','20:30:00','22:00:00',50,'Grand Ballroom','Platinum','[\"av\"]',350000.00,NULL,'approved','2026-08-25 15:08:22','2026-08-25 15:08:22',NULL),(4,21,'chamodi','chamodiumayangana2001@gmail.com','0740962069','Birthday','2026-08-29','Custom','19:06:00','20:07:00',50,'Grand Ballroom','Gold Package ','[\"cake\"]',287000.00,'\n\n--- Cake Customization ---\nDesign: Design 01\nFlavor: Red Velvet\nIcing: Buttercream\nWeight: 1kg\nShape: Square\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 13:37:43','2026-08-26 13:37:43',NULL),(5,21,'chamodi','chamodiumayangana2001@gmail.com','0740962060','Birthday','2026-08-28','Custom','20:16:00','20:17:00',50,'Sapphire Hall','Gold Package ','[\"cake\"]',212000.00,'\n\n--- Cake Customization ---\nDesign: Design 01\nFlavor: Vanilla\nIcing: Fondant\nWeight: 2kg\nShape: Heart\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 13:47:37','2026-08-26 13:47:37',NULL),(6,21,'chamodi','chamodiumayangana2001@gmail.com','0740962060','Birthday','2026-09-04','Custom','09:00:00','22:00:00',50,'Grand Ballroom','Gold Package ','[\"cake\"]',287000.00,'\n\n--- Cake Details ---\nDesign: Design 01\nWeight: 1.00 kg\nPrice: Rs. 3000.00\nMessage: happy birthday janu\nInstructions: N/A','pending','2026-08-26 15:47:54','2026-08-26 15:47:54',NULL),(7,21,'chamodi','chamodiumayangana2001@gmail.com','0778638094','Birthday','2026-08-29','Custom','19:00:00','21:57:00',50,'Sapphire Hall','Gold Package ','[\"cake\"]',212000.00,'\n\n--- Cake Details ---\nDesign: Design 01\nWeight: 1.5 kg\nPrice: Rs. 3000\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 16:27:47','2026-08-26 16:27:47',NULL);
+INSERT INTO `bookings` VALUES (1,20,'Test','test@test.com','1234567890','Birthday','2026-09-01','Custom','09:00:00','10:00:00',50,'Grand Ballroom','Gold','[]',275000.00,NULL,'cancelled','2026-08-25 14:07:18','2026-08-25 14:07:18',NULL),(2,20,'vijitha','kusum@gmail.com','0342255762','Wedding','2026-08-28','Custom','10:00:00','11:00:00',50,'Sapphire Hall','Gold','[\"cake\"]',212000.00,NULL,'pending','2026-08-25 15:02:56','2026-08-25 15:02:56',NULL),(3,20,'kusum','kusum@gmail.com','0765467345','Anniversary','2026-09-06','Custom','20:30:00','22:00:00',50,'Grand Ballroom','Platinum','[\"av\"]',350000.00,NULL,'approved','2026-08-25 15:08:22','2026-08-25 15:08:22',NULL),(4,21,'chamodi','chamodiumayangana2001@gmail.com','0740962069','Birthday','2026-08-29','Custom','19:06:00','20:07:00',50,'Grand Ballroom','Gold Package ','[\"cake\"]',287000.00,'\n\n--- Cake Customization ---\nDesign: Design 01\nFlavor: Red Velvet\nIcing: Buttercream\nWeight: 1kg\nShape: Square\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 13:37:43','2026-08-26 13:37:43',NULL),(5,21,'chamodi','chamodiumayangana2001@gmail.com','0740962060','Birthday','2026-08-28','Custom','20:16:00','20:17:00',50,'Sapphire Hall','Gold Package ','[\"cake\"]',212000.00,'\n\n--- Cake Customization ---\nDesign: Design 01\nFlavor: Vanilla\nIcing: Fondant\nWeight: 2kg\nShape: Heart\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 13:47:37','2026-08-26 13:47:37',NULL),(6,21,'chamodi','chamodiumayangana2001@gmail.com','0740962060','Birthday','2026-09-04','Custom','09:00:00','22:00:00',50,'Grand Ballroom','Gold Package ','[\"cake\"]',287000.00,'\n\n--- Cake Details ---\nDesign: Design 01\nWeight: 1.00 kg\nPrice: Rs. 3000.00\nMessage: happy birthday janu\nInstructions: N/A','pending','2026-08-26 15:47:54','2026-08-26 15:47:54',NULL),(7,21,'chamodi','chamodiumayangana2001@gmail.com','0778638094','Birthday','2026-08-29','Custom','19:00:00','21:57:00',50,'Sapphire Hall','Gold Package ','[\"cake\"]',212000.00,'\n\n--- Cake Details ---\nDesign: Design 01\nWeight: 1.5 kg\nPrice: Rs. 3000\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 16:27:47','2026-08-26 16:27:47',NULL),(8,21,'chamodi','chamodiumayangana2001@gmail.com','0778638094','Birthday','2026-09-04','Custom','21:00:00','21:59:00',50,'Sapphire Hall','Gold Package ','[\"cake\"]',212000.00,'\n\n--- Cake Details ---\nDesign: Design 03\nWeight: 1 kg\nPrice: Rs. 2750\nMessage: N/A\nInstructions: N/A','pending','2026-08-26 17:34:23','2026-08-26 17:34:23',NULL);
 /*!40000 ALTER TABLE `bookings` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -143,7 +143,7 @@ CREATE TABLE `cake_designs` (
   `price` decimal(10,2) DEFAULT NULL,
   `pricing_options` json DEFAULT NULL,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -152,7 +152,7 @@ CREATE TABLE `cake_designs` (
 
 LOCK TABLES `cake_designs` WRITE;
 /*!40000 ALTER TABLE `cake_designs` DISABLE KEYS */;
-INSERT INTO `cake_designs` VALUES (4,'Design 01','/uploads/1787761069517-404092503.jpg','active','2026-08-26 16:17:49',NULL,NULL,'[{\"price\": \"2500\", \"weight_kg\": \"1\"}, {\"price\": \"3000\", \"weight_kg\": \"1.5\"}]');
+INSERT INTO `cake_designs` VALUES (4,'Design 01','/uploads/1787761069517-404092503.jpg','active','2026-08-26 16:17:49',NULL,NULL,'[{\"price\": \"2500\", \"weight_kg\": \"1\"}, {\"price\": \"3000\", \"weight_kg\": \"1.5\"}]'),(5,'Design 02','/uploads/1787765433235-715724738.jpg','active','2026-08-26 17:30:33',NULL,NULL,'[{\"price\": \"3000\", \"weight_kg\": \"1\"}, {\"price\": \"3500\", \"weight_kg\": \"1.5\"}]'),(6,'Design 03','/uploads/1787765468836-244142402.jpg','active','2026-08-26 17:31:08',NULL,NULL,'[{\"price\": \"2750\", \"weight_kg\": \"1\"}]'),(7,'Design 04','/uploads/1787765524881-858523646.jpg','active','2026-08-26 17:32:04',NULL,NULL,'[{\"price\": \"3500\", \"weight_kg\": \"1\"}, {\"price\": \"4000\", \"weight_kg\": \"1.5\"}]'),(9,'Design 05','/uploads/1787765719360-217586737.jpg','active','2026-08-26 17:35:19',NULL,NULL,'[{\"price\": \"2400\", \"weight_kg\": \"1\"}]'),(10,'Design 06','/uploads/1787765822203-933049546.jpg','active','2026-08-26 17:37:02',NULL,NULL,'[{\"price\": \"3000\", \"weight_kg\": \"1\"}, {\"price\": \"3500\", \"weight_kg\": \"1.5\"}]'),(11,'Design 07','/uploads/1787765857406-581621087.jpg','active','2026-08-26 17:37:37',NULL,NULL,'[{\"price\": \"3100\", \"weight_kg\": \"1\"}, {\"price\": \"3600\", \"weight_kg\": \"1.5\"}]'),(12,'Design 08','/uploads/1787766287134-587393275.jpg','active','2026-08-26 17:44:47',NULL,NULL,'[{\"price\": \"2700\", \"weight_kg\": \"1\"}, {\"price\": \"3200\", \"weight_kg\": \"2\"}]'),(13,'Design 09','/uploads/1787766322300-925364486.jpg','active','2026-08-26 17:45:22',NULL,NULL,'[{\"price\": \"3500\", \"weight_kg\": \"1\"}, {\"price\": \"4000\", \"weight_kg\": \"1.5\"}]'),(14,'Design 10','/uploads/1787766362171-301166441.jpg','active','2026-08-26 17:46:02',NULL,NULL,'[{\"price\": \"3600\", \"weight_kg\": \"1\"}]'),(15,'Design 11','/uploads/1787766407194-339384909.jpg','active','2026-08-26 17:46:47',NULL,NULL,'[{\"price\": \"3000\", \"weight_kg\": \"1\"}, {\"price\": \"3500\", \"weight_kg\": \"1.5\"}]'),(16,'Design 12','/uploads/1787766447247-229837314.jpg','active','2026-08-26 17:47:27',NULL,NULL,'[{\"price\": \"3200\", \"weight_kg\": \"1\"}, {\"price\": \"4000\", \"weight_kg\": \"2\"}]');
 /*!40000 ALTER TABLE `cake_designs` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -199,7 +199,7 @@ CREATE TABLE `catering_packages` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `status` enum('active','inactive') DEFAULT 'active',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -208,7 +208,7 @@ CREATE TABLE `catering_packages` (
 
 LOCK TABLES `catering_packages` WRITE;
 /*!40000 ALTER TABLE `catering_packages` DISABLE KEYS */;
-INSERT INTO `catering_packages` VALUES (1,'Gold Package ',2500.00,'Standard Buffet + Welcome Drink','[\"Welcome Drink(Fruit Juice)\", \"Chicken Fried Rice\", \"Kankun Devilled\", \"Vegetable Chopsuey\", \"2 Cutlet\"]','2026-07-05 05:34:06','active');
+INSERT INTO `catering_packages` VALUES (1,'Gold Package ',2500.00,'Standard Buffet + Welcome Drink','[\"Welcome Drink(Fruit Juice)\", \"Chicken Fried Rice\", \"Kankun Devilled\", \"Vegetable Chopsuey\", \"2 Cutlet\"]','2026-07-05 05:34:06','active'),(2,'Diamond Package',4500.00,'Grand Buffet + Welcome Drink + 2 Desserts','[\"Welcome Drink (Mango / Faluda) \", \"Basmati Chicken Fried Rice\", \"Seafood Noodles\", \"Devilled Chicken or Mutton Curry\", \"Crumb Fried Prawns\", \"Cashew & Green Pea Curry\", \"Watalappam & Caramel Pudding\"]','2026-08-26 18:10:55','active'),(3,'Platinum Package',3500.00,'Welcome Drink (Mixed Fruit Juice)','[\"Chicken Fried Rice / Yellow Rice\", \"Sweet & Sour Fish\", \"Hot Butter Cuttlefish\", \"Brinjal Moju\", \"Potato Tempered\", \"Watalappam / Ice Cream\"]','2026-08-26 18:13:59','active');
 /*!40000 ALTER TABLE `catering_packages` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -321,7 +321,7 @@ CREATE TABLE `dishes` (
   PRIMARY KEY (`id`),
   KEY `dishes_ibfk_1` (`category_id`),
   CONSTRAINT `dishes_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `dish_categories` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=28 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -330,7 +330,7 @@ CREATE TABLE `dishes` (
 
 LOCK TABLES `dishes` WRITE;
 /*!40000 ALTER TABLE `dishes` DISABLE KEYS */;
-INSERT INTO `dishes` VALUES (1,NULL,'A La Carte','WBD0001','Vegetable Soup','regular',400.00,0.00,0.00,'2026-07-04 18:35:04','2026-07-04 18:35:04','active',1,0.00),(2,NULL,'A La Carte','WBD0002','Chicken With Egg Soup','regular',450.00,0.00,0.00,'2026-07-04 20:25:52','2026-07-04 20:25:52','active',1,0.00),(3,NULL,'A La Carte','WBD0003','Vegetable Noodles','portions',600.00,650.00,950.00,'2026-07-04 20:56:18','2026-07-04 20:56:18','active',1,0.00),(10,4,'A La Carte','WBD0004','vegitable fride rice','varied',0.00,650.00,950.00,'2026-08-25 13:16:00','2026-08-25 13:16:00','active',1,10.00);
+INSERT INTO `dishes` VALUES (1,NULL,'A La Carte','WBD0001','Vegetable Soup','regular',400.00,0.00,0.00,'2026-07-04 18:35:04','2026-07-04 18:35:04','active',1,0.00),(2,NULL,'A La Carte','WBD0002','Chicken With Egg Soup','regular',450.00,0.00,0.00,'2026-07-04 20:25:52','2026-07-04 20:25:52','active',1,0.00),(3,NULL,'A La Carte','WBD0003','Vegetable Noodles','portions',600.00,650.00,950.00,'2026-07-04 20:56:18','2026-07-04 20:56:18','active',1,0.00),(10,4,'A La Carte','WBD0004','vegitable fride rice','varied',0.00,650.00,950.00,'2026-08-25 13:16:00','2026-08-25 13:16:00','active',1,10.00),(11,2,'A La Carte','WBD0005','HOT & SOUR CHICKEN SOUP','regular',500.00,0.00,0.00,'2026-08-26 17:52:27','2026-08-26 17:52:27','active',1,0.00),(12,2,'A La Carte','WBD0006','TOM YAM SEAFOOD SOUP','regular',550.00,0.00,0.00,'2026-08-26 17:53:11','2026-08-26 17:53:11','active',1,0.00),(13,2,'A La Carte','WBD0007','CREAM OF MUSHROOM SOUP','regular',850.00,0.00,0.00,'2026-08-26 17:53:59','2026-08-26 17:53:59','active',1,0.00),(14,3,'A La Carte','WBD0008','COLESLAW SALAD','regular',750.00,0.00,0.00,'2026-08-26 17:54:23','2026-08-26 17:54:23','active',1,0.00),(15,3,'A La Carte','WBD0009','TOMATO ONION SALAD','regular',850.00,0.00,0.00,'2026-08-26 17:55:00','2026-08-26 17:55:00','active',1,0.00),(16,3,'A La Carte','WBD0010','FISH SALAD','regular',850.00,0.00,0.00,'2026-08-26 17:56:15','2026-08-26 17:56:15','active',1,0.00),(17,3,'A La Carte','WBD0011','MIXED VEGETABLE SALAD','regular',750.00,0.00,0.00,'2026-08-26 17:56:41','2026-08-26 17:56:41','active',1,0.00),(18,4,'A La Carte','WBD0012','VEGETABLE FRIED RICE','varied',0.00,650.00,950.00,'2026-08-26 17:57:37','2026-08-26 17:57:37','active',1,0.00),(19,4,'A La Carte','WBD0013','EGG FRIED RICE ','varied',0.00,700.00,1100.00,'2026-08-26 17:58:07','2026-08-26 17:58:07','active',1,0.00),(20,4,'A La Carte','WBD0014','CHICKEN FRIED RICE','varied',0.00,800.00,1300.00,'2026-08-26 17:58:50','2026-08-26 17:58:50','active',1,0.00),(21,4,'A La Carte','WBD0015','SEAFOOD FRIED RICE','varied',0.00,1000.00,1500.00,'2026-08-26 18:00:19','2026-08-26 18:00:19','active',1,0.00),(22,4,'A La Carte','WBD0016','MIXED FRIED RICE','varied',0.00,1100.00,1700.00,'2026-08-26 18:00:49','2026-08-26 18:00:49','active',1,0.00),(23,4,'A La Carte','WBD0017','NASIGURAN MIXED RICE ','varied',0.00,1200.00,1800.00,'2026-08-26 18:01:20','2026-08-26 18:01:20','active',1,0.00),(24,4,'A La Carte','WBD0018','MONGOLIAN SEAFOOD RICE','varied',0.00,1100.00,1600.00,'2026-08-26 18:02:00','2026-08-26 18:02:00','active',1,0.00),(25,4,'A La Carte','WBD0019','BACON & EGG FRIED RICE ','varied',0.00,1300.00,2000.00,'2026-08-26 18:02:45','2026-08-26 18:02:45','active',1,0.00),(26,4,'A La Carte','WBD0020','WIJAYASIRI SPECIAL CHICKEN KEBAB RICE','regular',2700.00,0.00,0.00,'2026-08-26 18:03:11','2026-08-26 18:03:11','active',1,0.00),(27,4,'A La Carte','WBD0021','WIJAYASIRI SPECIAL JAMBO NASI ','regular',3700.00,0.00,0.00,'2026-08-26 18:03:36','2026-08-26 18:03:36','active',1,0.00);
 /*!40000 ALTER TABLE `dishes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -573,4 +573,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-26 17:24:25
+-- Dump completed on 2026-08-26 20:16:36

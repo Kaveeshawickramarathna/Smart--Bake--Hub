@@ -173,12 +173,17 @@ const CakeDesigns = () => {
                                     <h3 className="text-lg font-bold text-[#2E1A12] mb-1 truncate">{design.name}</h3>
                                     <div className="text-sm font-semibold text-[#C8843B] mb-4">
                                         {design.pricing_options && design.pricing_options.length > 0 ? (
-                                            <span>
-                                                {design.pricing_options.length} Size Option(s) Available
-                                            </span>
+                                            <div className="space-y-1 bg-amber-50/50 p-2.5 rounded-lg border border-amber-100/50">
+                                                {design.pricing_options.map((opt, idx) => (
+                                                    <div key={idx} className="flex justify-between items-center text-xs">
+                                                        <span className="font-bold text-[#2E1A12]">{opt.weight_kg} kg</span>
+                                                        <span>LKR {Number(opt.price).toLocaleString()}</span>
+                                                    </div>
+                                                ))}
+                                            </div>
                                         ) : (
                                             <span>
-                                                {design.weight_kg ? `${design.weight_kg} kg` : '-'} • LKR {design.price ? Number(design.price).toFixed(2) : '0.00'}
+                                                {design.weight_kg ? `${design.weight_kg} kg` : '-'} • LKR {design.price ? Number(design.price).toLocaleString() : '0.00'}
                                             </span>
                                         )}
                                     </div>

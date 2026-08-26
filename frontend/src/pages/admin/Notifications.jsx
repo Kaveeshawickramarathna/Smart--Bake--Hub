@@ -1,9 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { Bell, CheckCircle2, Trash2 } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Bell, CheckCircle2, Trash2, ArrowRight } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
 const Notifications = () => {
+    const navigate = useNavigate();
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -47,6 +49,32 @@ const Notifications = () => {
         return new Date(dateString).toLocaleDateString(undefined, options);
     };
 
+    const handleNotificationClick = async (notification) => {
+        if (!notification.is_read) {
+            await markAsRead(notification.id);
+        }
+        
+        switch (notification.type) {
+            case 'order':
+                navigate('/admin/orders');
+                break;
+            case 'booking':
+                navigate('/admin/events');
+                break;
+            case 'inventory':
+            case 'stock':
+                navigate('/admin/inventory');
+                break;
+            case 'user':
+                navigate('/admin/users');
+                break;
+            default:
+                // If it's a general notification or unknown type, maybe just stay here or go to dashboard
+                // navigate('/admin/dashboard');
+                break;
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex justify-between items-center">
@@ -87,16 +115,19 @@ const Notifications = () => {
                         {notifications.map((notification) => (
                             <div 
                                 key={notification.id} 
-                                onClick={() => !notification.is_read && markAsRead(notification.id)}
-                                className={`p-5 flex gap-4 transition-colors ${!notification.is_read ? 'bg-[#F7F4ED]/50 cursor-pointer hover:bg-[#F7F4ED]' : 'bg-white'}`}
+                                onClick={() => handleNotificationClick(notification)}
+                                className={`p-5 flex gap-4 transition-all group ${!notification.is_read ? 'bg-[#F7F4ED]/50 cursor-pointer hover:bg-[#F7F4ED]' : 'bg-white cursor-pointer hover:bg-gray-50'}`}
                             >
                                 <div className="mt-1 flex-shrink-0">
                                     <div className={`w-2.5 h-2.5 rounded-full mt-1.5 ${!notification.is_read ? 'bg-red-500' : 'bg-gray-300'}`}></div>
                                 </div>
                                 <div className="flex-1">
-                                    <h4 className={`text-sm mb-1 ${!notification.is_read ? 'font-bold text-[#2E1A12]' : 'font-medium text-gray-700'}`}>
-                                        {notification.title}
-                                    </h4>
+                                    <div className="flex justify-between items-start">
+                                        <h4 className={`text-sm mb-1 ${!notification.is_read ? 'font-bold text-[#2E1A12]' : 'font-medium text-gray-700'}`}>
+                                            {notification.title}
+                                        </h4>
+                                        <ArrowRight className="w-4 h-4 text-gray-300 opacity-0 group-hover:opacity-100 transition-opacity" />
+                                    </div>
                                     <p className="text-sm text-gray-600 leading-relaxed mb-2">
                                         {notification.message}
                                     </p>
