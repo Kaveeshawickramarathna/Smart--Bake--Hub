@@ -1,4 +1,8 @@
-import React, { useState, useEffect, useMemo } from 'react';
+const fs = require('fs');
+
+let content = fs.readFileSync('d:/Project - II/Smart--Bake--Hub/frontend/src/pages/admin/Reports.jsx', 'utf8');
+
+const newCode = `import React, { useState, useEffect, useMemo } from 'react';
 import { FileText, Download, Info, Search, Bell, MoreHorizontal, ChevronLeft, ChevronRight, ChevronDown } from 'lucide-react';
 import { 
     BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Legend
@@ -46,7 +50,7 @@ const DashboardTable = ({ title, data = [], columns }) => {
     const currentData = sortedData.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage);
 
     const handleAction = (action) => {
-        toast(`${action} functionality coming soon!`, { icon: '🚧' });
+        toast(\`\${action} functionality coming soon!\`, { icon: '🚧' });
     };
 
     return (
@@ -71,13 +75,13 @@ const DashboardTable = ({ title, data = [], columns }) => {
             {/* Table */}
             <div className="flex-1 overflow-auto custom-scrollbar">
                 <table className="w-full text-sm text-left">
-                    <thead className="sticky top-0 bg-white shadow-sm">
+                    <thead className="sticky top-0 bg-white">
                         <tr className="text-gray-800 font-bold border-b-2 border-gray-100">
                             {columns.map((col, idx) => (
                                 <th 
                                     key={idx} 
                                     onClick={() => handleSort(col.key)}
-                                    className={`pb-3 pt-2 cursor-pointer hover:text-[#F59E0B] transition-colors ${col.align === 'right' ? 'text-right' : ''}`}
+                                    className={\`pb-3 pt-2 cursor-pointer hover:text-[#F59E0B] transition-colors \${col.align === 'right' ? 'text-right' : ''}\`}
                                 >
                                     {col.label} 
                                     <span className="text-gray-300 ml-1 text-[10px]">
@@ -88,13 +92,13 @@ const DashboardTable = ({ title, data = [], columns }) => {
                         </tr>
                     </thead>
                     <tbody>
-                        {sortedData.length === 0 ? (
+                        {currentData.length === 0 ? (
                             <tr><td colSpan={columns.length} className="text-center py-8 text-gray-400">No data available</td></tr>
                         ) : (
-                            sortedData.map((item, rowIdx) => (
+                            currentData.map((item, rowIdx) => (
                                 <tr key={rowIdx} className="border-b border-gray-50 hover:bg-gray-50/50">
                                     {columns.map((col, colIdx) => (
-                                        <td key={colIdx} className={`py-3 ${col.align === 'right' ? 'text-right' : ''} ${col.className || ''}`}>
+                                        <td key={colIdx} className={\`py-3 \${col.align === 'right' ? 'text-right' : ''} \${col.className || ''}\`}>
                                             {col.render ? col.render(item) : item[col.key]}
                                         </td>
                                     ))}
@@ -103,6 +107,47 @@ const DashboardTable = ({ title, data = [], columns }) => {
                         )}
                     </tbody>
                 </table>
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-between pt-4 mt-2 border-t border-gray-100 text-sm text-gray-500 shrink-0">
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <select 
+                            value={itemsPerPage} 
+                            onChange={(e) => {
+                                setItemsPerPage(Number(e.target.value));
+                                setCurrentPage(1);
+                            }}
+                            className="appearance-none bg-white border border-gray-200 rounded px-3 py-1 pr-8 cursor-pointer hover:bg-gray-50 outline-none text-xs font-medium focus:border-[#F59E0B]"
+                        >
+                            <option value={5}>5</option>
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                        </select>
+                        <ChevronDown className="w-3 h-3 absolute right-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                    </div>
+                    <span className="text-xs">All of {data.length}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                        disabled={currentPage === 1}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                        <ChevronLeft className="w-4 h-4" />
+                    </button>
+                    <div className="w-6 h-6 bg-[#F59E0B] text-white flex items-center justify-center rounded text-xs font-bold shadow-sm">
+                        {currentPage}
+                    </div>
+                    <button 
+                        onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                        disabled={currentPage === totalPages}
+                        className="p-1 hover:bg-gray-100 rounded text-gray-400 disabled:opacity-30 disabled:cursor-not-allowed"
+                    >
+                        <ChevronRight className="w-4 h-4" />
+                    </button>
+                </div>
             </div>
         </div>
     );
@@ -125,10 +170,10 @@ const Reports = () => {
                 api.get('/reports/bookings')
             ]);
             setReportData({
-                sales: salesRes.data,
-                payments: paymentsRes.data,
-                inventory: inventoryRes.data,
-                bookings: bookingsRes.data
+                sales: salesRes.data.data,
+                payments: paymentsRes.data.data,
+                inventory: inventoryRes.data.data,
+                bookings: bookingsRes.data.data
             });
         } catch (error) {
             console.error('Error fetching reports:', error);
@@ -161,7 +206,7 @@ const Reports = () => {
             
             pdf.setFontSize(10);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`Date: ${new Date().toLocaleDateString()}`, pageWidth - 15 - 30, 16);
+            pdf.text(\`Date: \${new Date().toLocaleDateString()}\`, pageWidth - 15 - 30, 16);
 
             // Sales & Revenue Section
             pdf.setTextColor(46, 26, 18);
@@ -175,15 +220,15 @@ const Reports = () => {
             yPos += 10;
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`Total Revenue: Rs. ${Number(reportData.sales.summary.totalRevenue).toLocaleString()}`, 15, yPos);
-            pdf.text(`Total Orders: ${reportData.sales.summary.totalOrders}`, 100, yPos);
+            pdf.text(\`Total Revenue: Rs. \${Number(reportData.sales.summary.totalRevenue).toLocaleString()}\`, 15, yPos);
+            pdf.text(\`Total Orders: \${reportData.sales.summary.totalOrders}\`, 100, yPos);
             
             yPos += 10;
             if (reportData.sales.topItems && reportData.sales.topItems.length > 0) {
                 autoTable(pdf, {
                     startY: yPos,
                     head: [['Top Selling Item', 'Total Sold', 'Revenue']],
-                    body: reportData.sales.topItems.map(item => [item.item_name, item.total_sold, `Rs. ${Number(item.revenue).toLocaleString()}`]),
+                    body: reportData.sales.topItems.map(item => [item.item_name, item.total_sold, \`Rs. \${Number(item.revenue).toLocaleString()}\`]),
                     headStyles: { fillColor: [200, 132, 59] },
                     margin: { left: 15, right: 15 }
                 });
@@ -202,8 +247,8 @@ const Reports = () => {
             yPos += 10;
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`Collected Revenue: Rs. ${Number(reportData.payments.summary.totalCollected).toLocaleString()}`, 15, yPos);
-            pdf.text(`Pending Payments: Rs. ${Number(reportData.payments.summary.totalPending).toLocaleString()}`, 100, yPos);
+            pdf.text(\`Collected Revenue: Rs. \${Number(reportData.payments.summary.totalCollected).toLocaleString()}\`, 15, yPos);
+            pdf.text(\`Pending Payments: Rs. \${Number(reportData.payments.summary.totalPending).toLocaleString()}\`, 100, yPos);
             
             yPos += 15;
             
@@ -217,9 +262,9 @@ const Reports = () => {
             yPos += 10;
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`Total Items: ${reportData.inventory.summary.totalItems}`, 15, yPos);
-            pdf.text(`Low Stock Alerts: ${reportData.inventory.summary.lowStockCount}`, 80, yPos);
-            pdf.text(`Est. Value: Rs. ${Number(reportData.inventory.summary.estimatedValue).toLocaleString()}`, 140, yPos);
+            pdf.text(\`Total Items: \${reportData.inventory.summary.totalItems}\`, 15, yPos);
+            pdf.text(\`Low Stock Alerts: \${reportData.inventory.summary.lowStockCount}\`, 80, yPos);
+            pdf.text(\`Est. Value: Rs. \${Number(reportData.inventory.summary.estimatedValue).toLocaleString()}\`, 140, yPos);
             
             yPos += 10;
             
@@ -229,7 +274,7 @@ const Reports = () => {
                     startY: yPos,
                     head: [['Low Stock Item', 'Category', 'Current Stock']],
                     body: reportData.inventory.lowStockItems.map(item => [item.item_name, item.category.replace('_', ' '), item.stock_quantity]),
-                    headStyles: { fillColor: [200, 132, 59] },
+                    headStyles: { fillColor: [46, 26, 18] },
                     margin: { left: 15, right: 15 }
                 });
                 yPos = pdf.lastAutoTable.finalY + 15;
@@ -249,8 +294,8 @@ const Reports = () => {
             yPos += 10;
             pdf.setFontSize(11);
             pdf.setFont('helvetica', 'normal');
-            pdf.text(`Total Bookings: ${reportData.bookings.summary.totalBookings}`, 15, yPos);
-            pdf.text(`Approved Bookings: ${reportData.bookings.summary.approvedBookings}`, 80, yPos);
+            pdf.text(\`Total Bookings: \${reportData.bookings.summary.totalBookings}\`, 15, yPos);
+            pdf.text(\`Approved Bookings: \${reportData.bookings.summary.approvedBookings}\`, 80, yPos);
             
             yPos += 10;
             
@@ -273,7 +318,7 @@ const Reports = () => {
                 pdf.setPage(i);
                 pdf.setFontSize(9);
                 pdf.setTextColor(150, 150, 150);
-                pdf.text(`Page ${i} of ${pageCount}`, pageWidth / 2, pageHeight - 10, { align: 'center' });
+                pdf.text(\`Page \${i} of \${pageCount}\`, pageWidth / 2, pageHeight - 10, { align: 'center' });
             }
 
             pdf.save('SmartBakeHub_Comprehensive_Business_Report.pdf');
@@ -285,7 +330,7 @@ const Reports = () => {
     };
 
     const handleAction = (action) => {
-        toast(`${action} functionality coming soon!`, { icon: '🚧' });
+        toast(\`\${action} functionality coming soon!\`, { icon: '🚧' });
     };
 
     return (
@@ -305,8 +350,8 @@ const Reports = () => {
                             toast.success(adminFeaturesEnabled ? "Admin features disabled" : "Admin features enabled");
                         }}
                     >
-                        <div className={`w-10 h-5 rounded-full relative transition-colors ${adminFeaturesEnabled ? 'bg-[#FCA311]' : 'bg-gray-200'}`}>
-                            <div className={`w-4 h-4 bg-white rounded-full absolute top-0.5 shadow-sm transition-transform ${adminFeaturesEnabled ? 'translate-x-5.5 right-0.5' : 'left-0.5'}`}></div>
+                        <div className={\`w-10 h-5 rounded-full relative transition-colors \${adminFeaturesEnabled ? 'bg-[#FCA311]' : 'bg-gray-200'}\`}>
+                            <div className={\`w-4 h-4 bg-white rounded-full absolute top-0.5 shadow-sm transition-transform \${adminFeaturesEnabled ? 'translate-x-5.5 right-0.5' : 'left-0.5'}\`}></div>
                         </div>
                         <span className="text-sm font-semibold text-gray-600">Admin features</span>
                     </div>
@@ -334,7 +379,7 @@ const Reports = () => {
                         columns={[
                             { key: 'item_name', label: 'Item Name', className: 'font-medium text-gray-800' },
                             { key: 'total_sold', label: 'Qty Sold', align: 'right', className: 'font-medium' },
-                            { key: 'revenue', label: 'Revenue', align: 'right', className: 'text-gray-600', render: (item) => `Rs. ${Number(item.revenue).toLocaleString()}` }
+                            { key: 'revenue', label: 'Revenue', align: 'right', className: 'text-gray-600', render: (item) => \`Rs. \${Number(item.revenue).toLocaleString()}\` }
                         ]}
                     />
 
@@ -400,3 +445,7 @@ const Reports = () => {
 };
 
 export default Reports;
+`;
+
+fs.writeFileSync('d:/Project - II/Smart--Bake--Hub/frontend/src/pages/admin/Reports.jsx', newCode);
+console.log("Updated Reports to include fully functional interactive buttons and tables");
