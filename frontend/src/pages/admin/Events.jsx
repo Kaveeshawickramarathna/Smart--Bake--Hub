@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Calendar, Users, DollarSign, Award, Clock, Check, X, Trash2, ChevronDown, ChevronUp, Mail, Phone, Info } from 'lucide-react';
+import { Calendar, Users, DollarSign, Award, Clock, Check, X, Trash2, ChevronDown, ChevronUp, Mail, Phone, Info, Sparkles } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -10,6 +10,14 @@ const Events = () => {
     const [loading, setLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState('all');
     const [expandedBookingId, setExpandedBookingId] = useState(null);
+    const ledgerRef = useRef(null);
+
+    const handleCardClick = (status) => {
+        setFilterStatus(status);
+        if (ledgerRef.current) {
+            ledgerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+    };
 
     const fetchBookings = async () => {
         setLoading(true);
@@ -110,7 +118,10 @@ const Events = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 
                 {/* Total Bookings */}
-                <div className="bg-white rounded-3xl p-6 border border-[#C8843B]/10 shadow-[0_8px_20px_rgba(46,26,18,0.02)] flex items-center justify-between">
+                <div 
+                    onClick={() => handleCardClick('all')}
+                    className="bg-white rounded-3xl p-6 border border-[#C8843B]/10 shadow-[0_8px_20px_rgba(46,26,18,0.02)] flex items-center justify-between cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#C8843B]/20 transition-all"
+                >
                     <div className="space-y-2">
                         <span className="text-gray-400 text-xs font-semibold uppercase">Total Applications</span>
                         <h3 className="text-3xl font-extrabold text-[#2E1A12] font-serif">{totalBookings}</h3>
@@ -121,7 +132,10 @@ const Events = () => {
                 </div>
 
                 {/* Pending Inquiries */}
-                <div className="bg-white rounded-3xl p-6 border border-[#C8843B]/10 shadow-[0_8px_20px_rgba(46,26,18,0.02)] flex items-center justify-between">
+                <div 
+                    onClick={() => handleCardClick('pending')}
+                    className="bg-white rounded-3xl p-6 border border-[#C8843B]/10 shadow-[0_8px_20px_rgba(46,26,18,0.02)] flex items-center justify-between cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#C8843B]/20 transition-all"
+                >
                     <div className="space-y-2">
                         <span className="text-gray-400 text-xs font-semibold uppercase">Pending Reviews</span>
                         <h3 className="text-3xl font-extrabold text-[#2E1A12] font-serif">{pendingInquiries}</h3>
@@ -132,7 +146,10 @@ const Events = () => {
                 </div>
 
                 {/* Approved Bookings */}
-                <div className="bg-white rounded-3xl p-6 border border-[#C8843B]/10 shadow-[0_8px_20px_rgba(46,26,18,0.02)] flex items-center justify-between">
+                <div 
+                    onClick={() => handleCardClick('approved')}
+                    className="bg-white rounded-3xl p-6 border border-[#C8843B]/10 shadow-[0_8px_20px_rgba(46,26,18,0.02)] flex items-center justify-between cursor-pointer hover:shadow-md hover:ring-2 hover:ring-[#C8843B]/20 transition-all"
+                >
                     <div className="space-y-2">
                         <span className="text-gray-400 text-xs font-semibold uppercase">Confirmed Events</span>
                         <h3 className="text-3xl font-extrabold text-[#2E1A12] font-serif">{approvedBookings}</h3>
@@ -155,7 +172,7 @@ const Events = () => {
             </div>
 
             {/* List and Actions */}
-            <div className="bg-white rounded-[32px] border border-[#C8843B]/10 shadow-sm overflow-hidden">
+            <div ref={ledgerRef} className="bg-white rounded-[32px] border border-[#C8843B]/10 shadow-sm overflow-hidden scroll-mt-24">
                 
                 {/* Filters Header */}
                 <div className="p-6 border-b border-gray-100 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
@@ -219,7 +236,12 @@ const Events = () => {
                                                 <td className="py-4.5 px-6">
                                                     <div className="font-semibold text-gray-800">{booking.hall_name}</div>
                                                     <div className="text-[10px] text-gray-400 mt-0.5">Package: <span className="font-semibold text-gray-600">{booking.package_name}</span></div>
-                                                    <div className="text-[10px] text-gray-400">Type: {booking.event_type}</div>
+                                                    <div className="text-[10px] text-gray-400 flex items-center gap-2">
+                                                        Type: {booking.event_type}
+                                                        {booking.add_ons && booking.add_ons.includes('cake') && (
+                                                            <span className="bg-[#C8843B] text-white text-[9px] px-1.5 py-0.5 rounded font-bold">CAKE</span>
+                                                        )}
+                                                    </div>
                                                 </td>
 
                                                 {/* Guests */}
@@ -322,12 +344,25 @@ const Events = () => {
                                                                 </h4>
                                                                 {booking.special_notes ? (
                                                                     <div className="p-4 rounded-xl bg-gray-50 border border-gray-100 text-[11px] text-gray-600 leading-relaxed font-medium whitespace-pre-line">
-                                                                        {booking.special_notes}
+                                                                        {booking.special_notes.split('--- Cake Details ---')[0].trim() || 'No general special requirements.'}
                                                                     </div>
                                                                 ) : (
                                                                     <p className="text-[11px] text-gray-400 italic">No special requirements mentioned.</p>
                                                                 )}
                                                             </div>
+
+                                                            {/* Cake Order Box */}
+                                                            {booking.special_notes && booking.special_notes.includes('--- Cake Details ---') && (
+                                                                <div className="flex-1 space-y-3">
+                                                                    <h4 className="text-xs font-bold text-[#C8843B] uppercase tracking-wider flex items-center gap-1.5">
+                                                                        <Sparkles className="w-4 h-4" />
+                                                                        Cake Details
+                                                                    </h4>
+                                                                    <div className="p-4 rounded-xl bg-amber-50 border border-[#C8843B]/20 text-[11px] text-[#2E1A12] leading-relaxed font-bold whitespace-pre-line shadow-inner">
+                                                                        {booking.special_notes.split('--- Cake Details ---')[1].trim()}
+                                                                    </div>
+                                                                </div>
+                                                            )}
 
                                                             {/* Client Direct Communication */}
                                                             <div className="w-full md:w-[240px] space-y-3 border-t md:border-t-0 md:border-l border-gray-100 pt-4 md:pt-0 md:pl-6 flex flex-col">

@@ -8,8 +8,10 @@ import { useAuthStore } from '../../store/authStore';
 import { useNavigate } from 'react-router-dom';
 import { 
     Calendar, Users, MapPin, Package, Check, 
-    ChevronRight, ArrowLeft, Send, Sparkles, AlertCircle
+    ChevronRight, ArrowLeft, Send, Sparkles, AlertCircle, X, Image as ImageIcon
 } from 'lucide-react';
+
+const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
 
 const EventBooking = () => {
     const { user } = useAuthStore();
@@ -20,6 +22,13 @@ const EventBooking = () => {
     const [bookedSlots, setBookedSlots] = useState([]);
     const [loadingSlots, setLoadingSlots] = useState(false);
     const [bookedHalls, setBookedHalls] = useState([]);
+    const [isCakeModalOpen, setIsCakeModalOpen] = useState(false);
+    const [cakeCustomization, setCakeCustomization] = useState({
+        design: '',
+        variantIndex: 0,
+        message: '',
+        specialInstructions: ''
+    });
 
     // Form State
     const [formData, setFormData] = useState({
@@ -39,13 +48,18 @@ const EventBooking = () => {
 
     // Configuration Data
     const eventTypes = ['Birthday', 'Corporate Event', 'Anniversary', 'Party'];
+    const [packages, setPackages] = useState([]);
+    const [loadingPackages, setLoadingPackages] = useState(true);
+    const [availableAddOns, setAvailableAddOns] = useState([]);
+    const [loadingAddOns, setLoadingAddOns] = useState(true);
+    const [cakeDesigns, setCakeDesigns] = useState([]);
+
+    // Available halls configuration
     const halls = [
         { id: 'Grand Ballroom', capacity: 300, price: 150000 },
         { id: 'Sapphire Hall', capacity: 150, price: 75000 },
         { id: 'Ruby Garden', capacity: 100, price: 50000 }
     ];
-    const [packages, setPackages] = useState([]);
-    const [loadingPackages, setLoadingPackages] = useState(true);
 
     useEffect(() => {
         const fetchPackages = async () => {
@@ -64,16 +78,34 @@ const EventBooking = () => {
                 setLoadingPackages(false);
             }
         };
+        const fetchAddOns = async () => {
+            try {
+                const response = await api.get('/addons');
+                if (response.data.success) {
+                    const activeAddOns = response.data.data.filter(addon => addon.status === 'active');
+                    setAvailableAddOns(activeAddOns);
+                }
+            } catch (error) {
+                console.error('Failed to fetch add-ons:', error);
+            } finally {
+                setLoadingAddOns(false);
+            }
+        };
+        const fetchCakeData = async () => {
+            try {
+                const designsRes = await api.get('/cake-designs');
+                
+                if (designsRes.data.success) {
+                    setCakeDesigns(designsRes.data.data.filter(d => d.status === 'active'));
+                }
+            } catch (error) {
+                console.error('Failed to fetch cake data:', error);
+            }
+        };
         fetchPackages();
+        fetchAddOns();
+        fetchCakeData();
     }, []);
-    const availableAddOns = [
-        { id: 'cake', name: 'Custom Anniversary/Birthday Cake', price: 12000 },
-        { id: 'av', name: 'Pro Audio & Stage Visual Suite', price: 25000 },
-        { id: 'live', name: 'Live Hopper & Kottu Stations', price: 15000 },
-        { id: 'photo', name: 'Official Event Photography', price: 30000 }
-    ];
-
-    // Remove old useEffect for isAvailable
 
     // Fetch booked slots when date and hall change
     useEffect(() => {
@@ -114,7 +146,14 @@ const EventBooking = () => {
                         end_time: formData.end_time
                     }
                 });
-                setBookedHalls(data.bookedHalls || []);
+                const booked = data.bookedHalls || [];
+                setBookedHalls(booked);
+
+                // If currently selected hall is booked, switch to first available
+                if (booked.includes(formData.hall_name)) {
+                    const firstAvailable = halls.find(h => !booked.includes(h.id));
+                    setFormData(prev => ({ ...prev, hall_name: firstAvailable ? firstAvailable.id : '' }));
+                }
             } catch (error) {
                 console.error("Failed to fetch booked halls", error);
                 setBookedHalls([]);
@@ -149,13 +188,11 @@ const EventBooking = () => {
         
         formData.add_ons.forEach(addonId => {
             const addon = availableAddOns.find(a => a.id === addonId);
-            if (addon) total += addon.price;
+            if (addon) total += Number(addon.price);
         });
 
         return total;
     };
-
-    // Removed checkAvailability function
 
     const nextStep = () => {
         if (step === 1) {
@@ -203,12 +240,29 @@ const EventBooking = () => {
         setLoading(true);
         try {
             const total_price = calculateTotal();
-            const payload = { ...formData, total_price };
+            let finalSpecialNotes = formData.special_notes;
+            
+            if (formData.add_ons.includes('cake')) {
+                const selectedDesign = cakeDesigns.find(d => d.id === Number(cakeCustomization.design));
+                const designName = selectedDesign?.name || 'Custom/No Design';
+                
+                const hasOptions = selectedDesign?.pricing_options && selectedDesign.pricing_options.length > 0;
+                const currentVariant = hasOptions 
+                    ? selectedDesign.pricing_options[cakeCustomization.variantIndex || 0] 
+                    : selectedDesign;
+
+                const weight = currentVariant?.weight_kg ? `${currentVariant.weight_kg} kg` : 'N/A';
+                const price = currentVariant?.price ? `Rs. ${currentVariant.price}` : 'N/A';
+                
+                const cakeDetails = `\n\n--- Cake Details ---\nDesign: ${designName}\nWeight: ${weight}\nPrice: ${price}\nMessage: ${cakeCustomization.message || 'N/A'}\nInstructions: ${cakeCustomization.specialInstructions || 'N/A'}`;
+                finalSpecialNotes = finalSpecialNotes ? finalSpecialNotes + cakeDetails : cakeDetails;
+            }
+
+            const payload = { ...formData, special_notes: finalSpecialNotes, total_price };
             
             await api.post('/bookings', payload);
             toast.success('Event booking request submitted successfully!', { icon: '🎉' });
             
-            // Navigate to home or profile after success
             setTimeout(() => {
                 navigate('/');
             }, 2000);
@@ -238,7 +292,6 @@ const EventBooking = () => {
                         </div>
                     </ScrollReveal>
 
-                    {/* Progress Steps */}
                     <div className="flex items-center justify-center mb-12 max-w-2xl mx-auto">
                         <div className="flex items-center w-full">
                             <div className={`flex flex-col items-center relative z-10 transition-colors duration-500 ${step >= 1 ? 'text-[#C8843B]' : 'text-gray-300'}`}>
@@ -335,19 +388,15 @@ const EventBooking = () => {
                                                 onChange={handleInputChange}
                                                 className="w-full bg-[#F7F4ED]/50 border border-gray-200 rounded-xl px-4 py-3.5 text-sm font-semibold focus:outline-none focus:border-[#C8843B] transition-colors"
                                             >
-                                                {halls.map(h => {
-                                                    const isBooked = bookedHalls.includes(h.id);
-                                                    return (
-                                                        <option key={h.id} value={h.id} disabled={isBooked}>
-                                                            {h.id} (Max {h.capacity} Pax) {formData.event_date ? (isBooked ? ' - ❌ Booked' : ' - ✅ Available') : ''}
-                                                        </option>
-                                                    );
-                                                })}
+                                                {halls.filter(h => !bookedHalls.includes(h.id)).map(h => (
+                                                    <option key={h.id} value={h.id}>
+                                                        {h.id} (Max {h.capacity} Pax) {formData.event_date ? ' - ✅ Available' : ''}
+                                                    </option>
+                                                ))}
                                             </select>
                                         </div>
                                     </div>
 
-                                    {/* Booked Slots Display */}
                                     {formData.event_date && formData.hall_name && (
                                         <div className="bg-orange-50/50 border border-orange-100 rounded-2xl p-4 sm:p-6 mb-4">
                                             <h4 className="text-sm font-bold text-[#2E1A12] mb-2">Booked Times for this date</h4>
@@ -446,24 +495,34 @@ const EventBooking = () => {
                                             {availableAddOns.map(addon => {
                                                 const isSelected = formData.add_ons.includes(addon.id);
                                                 return (
-                                                    <div 
-                                                        key={addon.id}
-                                                        onClick={() => handleAddOnToggle(addon.id)}
-                                                        className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
-                                                            isSelected 
-                                                            ? 'border-[#C8843B] bg-white shadow-sm' 
-                                                            : 'border-gray-100 bg-gray-50/50 hover:bg-white hover:border-[#C8843B]/30'
-                                                        }`}
-                                                    >
-                                                        <div className="flex items-center gap-3">
-                                                            <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                                                                isSelected ? 'bg-[#C8843B] border-[#C8843B]' : 'bg-white border-gray-300'
-                                                            }`}>
-                                                                {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                                                    <div key={addon.id} className="flex flex-col gap-2">
+                                                        <div 
+                                                            onClick={() => handleAddOnToggle(addon.id)}
+                                                            className={`flex items-center justify-between p-4 rounded-xl border transition-all cursor-pointer ${
+                                                                isSelected 
+                                                                ? 'border-[#C8843B] bg-white shadow-sm' 
+                                                                : 'border-gray-100 bg-gray-50/50 hover:bg-white hover:border-[#C8843B]/30'
+                                                            }`}
+                                                        >
+                                                            <div className="flex items-center gap-3">
+                                                                <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
+                                                                    isSelected ? 'bg-[#C8843B] border-[#C8843B]' : 'bg-white border-gray-300'
+                                                                }`}>
+                                                                    {isSelected && <Check className="w-3.5 h-3.5 text-white" />}
+                                                                </div>
+                                                                <span className="text-sm font-semibold text-[#2E1A12]">{addon.name}</span>
                                                             </div>
-                                                            <span className="text-sm font-semibold text-[#2E1A12]">{addon.name}</span>
+                                                            <span className="text-xs font-bold text-[#C8843B]">Rs. {Number(addon.price).toLocaleString()}</span>
                                                         </div>
-                                                        <span className="text-xs font-bold text-[#C8843B]">Rs. {addon.price.toLocaleString()}</span>
+                                                        
+                                                        {isSelected && addon.id === 'cake' && (
+                                                            <button 
+                                                                onClick={(e) => { e.stopPropagation(); setIsCakeModalOpen(true); }}
+                                                                className="ml-8 mr-2 py-2 px-4 bg-[#FDF6ED] border border-[#C8843B]/30 rounded-lg text-xs font-bold text-[#C8843B] hover:bg-[#C8843B] hover:text-white transition-colors flex items-center justify-center gap-2"
+                                                            >
+                                                                <Sparkles className="w-3.5 h-3.5" /> Cake
+                                                            </button>
+                                                        )}
                                                     </div>
                                                 );
                                             })}
@@ -480,7 +539,6 @@ const EventBooking = () => {
                                 <div className="space-y-8">
                                     
                                     <div className="flex flex-col lg:flex-row gap-8">
-                                        {/* Contact Form */}
                                         <div className="w-full lg:w-1/2 space-y-6">
                                             <div className="flex items-center gap-3 pb-4 border-b border-gray-100">
                                                 <div className="w-8 h-8 rounded-xl bg-amber-50 flex items-center justify-center text-[#C8843B]">
@@ -536,7 +594,6 @@ const EventBooking = () => {
                                             </div>
                                         </div>
 
-                                        {/* Order Summary */}
                                         <div className="w-full lg:w-1/2">
                                             <div className="bg-[#2E1A12] text-white rounded-3xl p-8 shadow-xl">
                                                 <h3 className="text-xl font-bold font-serif mb-6 flex items-center gap-3">
@@ -593,7 +650,6 @@ const EventBooking = () => {
                             </ScrollReveal>
                         )}
 
-                        {/* Navigation Buttons */}
                         <div className="mt-12 pt-8 border-t border-gray-100 flex items-center justify-between">
                             {step > 1 ? (
                                 <button 
@@ -624,6 +680,131 @@ const EventBooking = () => {
 
                     </div>
                 </main>
+
+                {/* CAKE CUSTOMIZATION MODAL */}
+                {isCakeModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
+                        <div className="bg-white rounded-2xl w-full max-w-4xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                            <div className="flex justify-between items-center p-6 border-b border-gray-100 bg-amber-50/30">
+                                <div>
+                                    <h2 className="text-xl font-bold font-serif text-[#2E1A12]">Cake</h2>
+                                    <p className="text-xs text-gray-500 mt-1">Design the perfect cake for your event</p>
+                                </div>
+                                <button onClick={() => setIsCakeModalOpen(false)} className="p-2 bg-white rounded-full hover:bg-gray-100 transition-colors shadow-sm">
+                                    <X className="w-5 h-5 text-gray-500" />
+                                </button>
+                            </div>
+                            
+                            <div className="p-6 overflow-y-auto space-y-5 custom-scrollbar">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <div className="space-y-5">
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
+                                                <ImageIcon className="w-4 h-4" /> Select a Design
+                                            </label>
+                                            <select 
+                                                value={cakeCustomization.design}
+                                                onChange={(e) => setCakeCustomization({...cakeCustomization, design: e.target.value, variantIndex: 0})}
+                                                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-[#C8843B] focus:outline-none bg-white"
+                                            >
+                                                <option value="">Choose a cake design...</option>
+                                                {cakeDesigns.map((design) => (
+                                                    <option key={design.id} value={design.id}>{design.name}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+
+                                        {cakeCustomization.design && (() => {
+                                            const selectedDesign = cakeDesigns.find(d => d.id === Number(cakeCustomization.design));
+                                            if (selectedDesign?.pricing_options && selectedDesign.pricing_options.length > 0) {
+                                                return (
+                                                    <div className="space-y-2">
+                                                        <label className="text-xs font-bold text-gray-500 uppercase">Select Size</label>
+                                                        <select 
+                                                            value={cakeCustomization.variantIndex || 0}
+                                                            onChange={(e) => setCakeCustomization({...cakeCustomization, variantIndex: parseInt(e.target.value)})}
+                                                            className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-[#C8843B] focus:outline-none bg-white"
+                                                        >
+                                                            {selectedDesign.pricing_options.map((opt, idx) => (
+                                                                <option key={idx} value={idx}>{opt.weight_kg} kg - LKR {opt.price}</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+                                                );
+                                            }
+                                            return null;
+                                        })()}
+                                        
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase">Message on Cake</label>
+                                            <input 
+                                                type="text" 
+                                                placeholder="e.g. Happy Birthday John!"
+                                                value={cakeCustomization.message}
+                                                onChange={(e) => setCakeCustomization({...cakeCustomization, message: e.target.value})}
+                                                className="w-full border border-gray-200 rounded-xl px-4 py-2.5 text-sm font-medium focus:border-[#C8843B] focus:outline-none"
+                                            />
+                                        </div>
+                                        
+                                        <div className="space-y-2">
+                                            <label className="text-xs font-bold text-gray-500 uppercase">Special Instructions / Theme</label>
+                                            <textarea 
+                                                rows="4"
+                                                placeholder="Any specific colors, themes, or design details?"
+                                                value={cakeCustomization.specialInstructions}
+                                                onChange={(e) => setCakeCustomization({...cakeCustomization, specialInstructions: e.target.value})}
+                                                className="w-full border border-gray-200 rounded-xl px-4 py-3 text-sm font-medium focus:border-[#C8843B] focus:outline-none resize-none"
+                                            ></textarea>
+                                        </div>
+                                    </div>
+
+                                    {/* Preview Side */}
+                                    <div className="h-full">
+                                        {cakeCustomization.design ? (() => {
+                                            const selectedDesign = cakeDesigns.find(d => d.id === Number(cakeCustomization.design));
+                                            if (!selectedDesign) return null;
+                                            
+                                            const hasOptions = selectedDesign.pricing_options && selectedDesign.pricing_options.length > 0;
+                                            const currentVariant = hasOptions 
+                                                ? selectedDesign.pricing_options[cakeCustomization.variantIndex || 0] 
+                                                : selectedDesign;
+
+                                            return (
+                                                <div className="rounded-xl overflow-hidden border-2 border-[#C8843B] shadow-md h-full flex flex-col bg-white">
+                                                    <div className="flex-grow bg-gray-100 flex items-center justify-center overflow-hidden min-h-[200px]">
+                                                        <img src={`${BASE_URL}${selectedDesign.image_url}`} alt={selectedDesign.name} className="w-full h-full object-cover" />
+                                                    </div>
+                                                    <div className="p-4 text-center bg-[#C8843B] text-white flex-shrink-0">
+                                                        <span className="font-bold text-base block">{selectedDesign.name}</span>
+                                                        <span className="opacity-90 text-sm mt-1 block">
+                                                            {currentVariant?.weight_kg ? `${currentVariant.weight_kg} kg` : ''} 
+                                                            {currentVariant?.weight_kg && currentVariant?.price ? ' • ' : ''}
+                                                            {currentVariant?.price ? `Rs. ${currentVariant.price}` : ''}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            );
+                                        })() : (
+                                            <div className="rounded-xl border-2 border-dashed border-gray-200 h-full min-h-[200px] flex flex-col items-center justify-center text-gray-400 bg-gray-50">
+                                                <ImageIcon className="w-12 h-12 mb-3 opacity-30" />
+                                                <span className="text-sm font-medium">Select a design to preview</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div className="p-6 border-t border-gray-100 bg-gray-50 flex justify-end">
+                                <button 
+                                    onClick={() => setIsCakeModalOpen(false)}
+                                    className="px-6 py-2.5 bg-[#2E1A12] text-white rounded-xl text-sm font-bold shadow hover:bg-[#C8843B] transition-colors"
+                                >
+                                    Save Customization
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
             </div>
             <Footer />
         </div>
