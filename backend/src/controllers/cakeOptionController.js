@@ -1,4 +1,4 @@
-const db = require('../../config/db');
+const db = require('../config/db');
 
 // Get all options
 exports.getOptions = (req, res) => {

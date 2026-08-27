@@ -19,6 +19,7 @@ import Contact from './pages/public/Contact';
 import ForgotPassword from './pages/auth/ForgotPassword';
 import Chatbot from './components/Chatbot';
 import ResetPassword from './pages/auth/ResetPassword';
+import NotFound from './pages/public/NotFound';
 
 // Admin Pages
 import AdminLogin from './pages/auth/AdminLogin';
@@ -69,7 +70,7 @@ const PrivateRoute = ({ children, roles, loginPath }) => {
             return <Navigate to="/admin" />;
         }
         if (user.role === 'staff') {
-            return <Navigate to="/staff" />;
+            return <Navigate to="/secure-staff-portal" />;
         }
         return <Navigate to="/" />;
     }
@@ -119,7 +120,7 @@ function App() {
                 <Route path="/reset-password" element={<ResetPassword />} />
                 <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin/setup" element={<AdminSetup />} />
-                <Route path="/staff/login" element={<StaffLogin />} />
+                <Route path="/secure-staff-portal/login" element={<StaffLogin />} />
                 <Route path="/about" element={<AboutUs />} />
                 <Route path="/catering" element={<PublicCateringPackages />} />
                 <Route path="/bookings" element={<EventBooking />} />
@@ -128,7 +129,7 @@ function App() {
 
                 {/* Admin Routes */}
                 <Route path="/admin" element={
-                    <PrivateRoute roles={['admin', 'staff']}>
+                    <PrivateRoute roles={['admin']}>
                         <AdminLayout />
                     </PrivateRoute>
                 }>
@@ -154,16 +155,18 @@ function App() {
                     <Route path="notifications" element={<Notifications />} />
                     <Route path="qrcodes" element={<QRCodes />} />
                     <Route path="chat" element={<ChatSupport />} />
-                    <Route path="users" element={<Users />} />
                     <Route path="reports" element={<Reports />} />
                 </Route>
 
                 {/* Staff Routes */}
-                <Route path="/staff" element={
-                    <PrivateRoute roles={['staff', 'admin']} loginPath="/staff/login">
+                <Route path="/secure-staff-portal" element={
+                    <PrivateRoute roles={['staff', 'admin']} loginPath="/secure-staff-portal/login">
                         <StaffDashboard />
                     </PrivateRoute>
                 } />
+
+                {/* Catch-all 404 Route for Security by Obscurity */}
+                <Route path="*" element={<NotFound />} />
             </Routes>
             </ErrorBoundary>
             <Chatbot />

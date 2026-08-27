@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import ScrollReveal from '../../components/ScrollReveal';
 import { 
     User, Mail, Shield, Lock, Store, Clock, 
-    Check, AlertCircle, Save, Settings as SettingsIcon, Building2
+    Check, AlertCircle, Save, Settings as SettingsIcon, Building2, Eye, EyeOff
 } from 'lucide-react';
 
 const Settings = () => {
@@ -20,6 +20,9 @@ const Settings = () => {
     const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     // Mock Store Configurations
     const [storeName, setStoreName] = useState('Smart Bake Hub - Headquarters');
@@ -235,12 +238,19 @@ const Settings = () => {
                                         <div className="relative">
                                             <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                             <input 
-                                                type="password"
+                                                type={showCurrentPassword ? "text" : "password"}
                                                 value={currentPassword}
                                                 onChange={(e) => setCurrentPassword(e.target.value)}
-                                                className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
+                                                className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
                                                 placeholder="••••••••"
                                             />
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8843B] transition-colors"
+                                            >
+                                                {showCurrentPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                            </button>
                                         </div>
                                     </div>
 
@@ -250,12 +260,19 @@ const Settings = () => {
                                             <div className="relative">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                                 <input 
-                                                    type="password"
+                                                    type={showNewPassword ? "text" : "password"}
                                                     value={newPassword}
                                                     onChange={(e) => setNewPassword(e.target.value)}
-                                                    className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
+                                                    className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 pl-11 pr-12 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
                                                     placeholder="••••••••"
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8843B] transition-colors"
+                                                >
+                                                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
                                             </div>
                                         </div>
 
@@ -264,13 +281,23 @@ const Settings = () => {
                                             <div className="relative">
                                                 <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                                 <input 
-                                                    type="password"
+                                                    type={showConfirmPassword ? "text" : "password"}
                                                     value={confirmPassword}
                                                     onChange={(e) => setConfirmPassword(e.target.value)}
-                                                    className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
+                                                    className={`w-full bg-gray-50/50 border ${confirmPassword && newPassword !== confirmPassword ? 'border-red-300' : 'border-gray-200/80'} rounded-2xl py-3.5 pl-11 pr-12 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]`}
                                                     placeholder="••••••••"
                                                 />
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-[#C8843B] transition-colors"
+                                                >
+                                                    {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                                </button>
                                             </div>
+                                            {confirmPassword && newPassword !== confirmPassword && (
+                                                <p className="text-xs text-red-500 font-bold mt-1">Passwords do not match</p>
+                                            )}
                                         </div>
                                     </div>
                                 </div>

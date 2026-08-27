@@ -126,7 +126,7 @@ const Menus = () => {
     const handleAddToCart = (item) => {
         if (!user) {
             toast.error('Please log in to add items to your cart');
-            navigate('/login');
+            navigate('/secure-login');
             return;
         }
 
@@ -154,7 +154,7 @@ const Menus = () => {
     const handleBuyItem = (item) => {
         if (!user) {
             toast.error('Please log in to place an order');
-            navigate('/login');
+            navigate('/secure-login');
             return;
         }
 

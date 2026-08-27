@@ -53,7 +53,7 @@ const ForgotPassword = () => {
                 </div>
 
                 <div className="mb-12 lg:mb-16">
-                    <Link to="/login" className="inline-flex items-center gap-2 text-xs font-bold text-[#4A3C31] hover:text-[#C8843B] transition-colors border border-transparent hover:border-[#C8843B]/30 bg-white/40 hover:bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm w-max">
+                    <Link to="/secure-login" className="inline-flex items-center gap-2 text-xs font-bold text-[#4A3C31] hover:text-[#C8843B] transition-colors border border-transparent hover:border-[#C8843B]/30 bg-white/40 hover:bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm w-max">
                         <ArrowLeft className="w-4 h-4" /> Back to Login
                     </Link>
                 </div>
@@ -101,7 +101,7 @@ const ForgotPassword = () => {
                         <div className="mt-8 text-center">
                             <p className="text-xs text-gray-500 font-semibold">
                                 Remembered your password?{' '}
-                                <Link to="/login" className="font-bold text-[#A67B5B] hover:text-[#8c5e35] transition-colors">
+                                <Link to="/secure-login" className="font-bold text-[#A67B5B] hover:text-[#8c5e35] transition-colors">
                                     Log In
                                 </Link>
                             </p>
