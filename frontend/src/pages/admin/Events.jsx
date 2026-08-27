@@ -4,7 +4,7 @@ import { Calendar, Users, DollarSign, Award, Clock, Check, X, Trash2, ChevronDow
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
-const Events = () => {
+const Events = ({ onNavigateToAdd }) => {
     const navigate = useNavigate();
     const [bookings, setBookings] = useState([]);
     const [loading, setLoading] = useState(true);
@@ -107,7 +107,10 @@ const Events = () => {
                     <p className="text-sm text-gray-500 mt-1">Manage event hall rentals, catering inquiries, and slot allocations.</p>
                 </div>
                 <button 
-                    onClick={() => navigate('/admin/events/add')}
+                    onClick={() => {
+                        if (onNavigateToAdd) onNavigateToAdd();
+                        else navigate('/admin/events/add');
+                    }}
                     className="flex items-center justify-center gap-2 bg-[#2E1A12] hover:bg-[#C8843B] text-white font-bold text-sm px-6 py-2.5 rounded-xl shadow-md transition-colors cursor-pointer"
                 >
                     + Create Booking

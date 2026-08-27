@@ -9,23 +9,28 @@ const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.rep
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
-const AddEvent = () => {
+const AddEvent = ({ onBack }) => {
     const navigate = useNavigate();
     
     const [loading, setLoading] = useState(false);
     const [checkingAvailability, setCheckingAvailability] = useState(false);
     const [isAvailable, setIsAvailable] = useState(null);
 
-    const [isCakeModalOpen, setIsCakeModalOpen] = useState(false);
-    const [cakeCustomization, setCakeCustomization] = useState({
-        design: '',
-        flavor: 'Chocolate',
-        icing: 'Buttercream',
-        weight: '1kg',
-        shape: 'Round',
-        message: '',
-        specialInstructions: ''
-    });
+const handleBack = () => {
+    if (onBack) onBack();
+    else navigate('/admin/events');
+};
+
+const [isCakeModalOpen, setIsCakeModalOpen] = useState(false);
+const [cakeCustomization, setCakeCustomization] = useState({
+    design: '',
+    flavor: 'Chocolate',
+    icing: 'Buttercream',
+    weight: '1kg',
+    shape: 'Round',
+    message: '',
+    specialInstructions: ''
+});
 
     const [formData, setFormData] = useState({
         event_type: 'Birthday',
@@ -258,7 +263,7 @@ const AddEvent = () => {
             
             await api.post('/bookings/manual', payload);
             toast.success('Manual booking created successfully!', { icon: '🎉' });
-            navigate('/admin/events');
+            handleBack();
         } catch (error) {
             toast.error(error.response?.data?.message || 'Failed to submit booking');
         } finally {
@@ -270,8 +275,8 @@ const AddEvent = () => {
         <div className="space-y-6 pb-12">
             <div className="flex items-center gap-4">
                 <button 
-                    onClick={() => navigate('/admin/events')}
-                    className="p-2 border border-gray-200 rounded-xl hover:bg-gray-50 text-gray-500 transition-colors"
+                    onClick={handleBack}
+                    className="p-2.5 rounded-xl border border-gray-200 text-gray-500 hover:bg-gray-50 hover:text-[#2E1A12] transition-colors cursor-pointer"
                 >
                     <ArrowLeft className="w-5 h-5" />
                 </button>

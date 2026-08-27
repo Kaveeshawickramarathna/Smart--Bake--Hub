@@ -9,7 +9,7 @@ const getSalesReport = async (req, res) => {
         const [totalOrders] = await pool.query('SELECT COUNT(*) as total FROM orders WHERE status = "completed"');
         
         // Sales over last 7 days
-        const [dailySales] = await pool.query(`
+        const [dailySalesRaw] = await pool.query(`
             SELECT DATE(created_at) as date, SUM(total_amount) as amount 
             FROM orders 
             WHERE status = "completed" AND created_at >= DATE(NOW()) - INTERVAL 7 DAY
@@ -17,13 +17,33 @@ const getSalesReport = async (req, res) => {
             ORDER BY date ASC
         `);
 
+        // Ensure all 7 days are present
+        const dailySales = [];
+        for (let i = 6; i >= 0; i--) {
+            const d = new Date();
+            d.setDate(d.getDate() - i);
+            const dateStr = d.toISOString().split('T')[0];
+            const found = dailySalesRaw.find(row => {
+                // row.date could be a Date object or string depending on mysql2 config
+                const rowDateStr = new Date(row.date).toISOString().split('T')[0];
+                return rowDateStr === dateStr;
+            });
+            dailySales.push({
+                date: dateStr,
+                amount: found ? Number(found.amount) : 0
+            });
+        }
+
         // Top 5 selling items
         const [topItems] = await pool.query(`
-            SELECT item_name, SUM(quantity) as total_sold, SUM(quantity * price) as revenue
-            FROM order_items
-            JOIN orders ON order_items.order_id = orders.id
-            WHERE orders.status = "completed"
-            GROUP BY item_name
+            SELECT COALESCE(p.name, m.name, b.name, oi.item_name, 'Unknown Item') as item_name, SUM(oi.quantity) as total_sold, SUM(oi.quantity * oi.price) as revenue
+            FROM order_items oi
+            JOIN orders o ON oi.order_id = o.id
+            LEFT JOIN products p ON oi.product_id = p.id
+            LEFT JOIN dishes m ON oi.menu_id = m.id
+            LEFT JOIN beverages b ON oi.beverage_id = b.id
+            WHERE o.status = "completed"
+            GROUP BY COALESCE(p.name, m.name, b.name, oi.item_name, 'Unknown Item')
             ORDER BY total_sold DESC
             LIMIT 5
         `);
@@ -63,21 +83,30 @@ const getPaymentReport = async (req, res) => {
 const getInventoryReport = async (req, res) => {
     try {
         const [totalItems] = await pool.query('SELECT COUNT(*) as total FROM inventory_items');
-        const [lowStockItems] = await pool.query('SELECT * FROM inventory_items WHERE stock_quantity <= low_stock_threshold');
-        const [totalValue] = await pool.query(`
-            SELECT SUM(i.stock_quantity * p.price) as value 
-            FROM inventory_items i
-            JOIN products p ON i.item_name = p.name
-        `);
+        
+        // Low stock items based on threshold
+        const [lowStockItemsRaw] = await pool.query('SELECT * FROM inventory_items WHERE stock_quantity <= low_stock_threshold');
+        const lowStockItems = lowStockItemsRaw.map(p => ({
+            item_name: p.item_name,
+            category: p.category || 'Uncategorized',
+            stock_quantity: Number(p.stock_quantity)
+        }));
+
+        // No price in inventory_items currently, so value is 0
+        const totalValue = 0;
 
         // Category distribution
-        const [categories] = await pool.query('SELECT category, COUNT(*) as count FROM inventory_items GROUP BY category');
+        const [categoriesRaw] = await pool.query('SELECT category, COUNT(*) as count FROM inventory_items GROUP BY category');
+        const categories = categoriesRaw.map(c => ({
+            category: c.category || 'Uncategorized',
+            count: Number(c.count)
+        }));
 
         res.json({
             summary: {
                 totalItems: totalItems[0].total || 0,
                 lowStockCount: lowStockItems.length || 0,
-                estimatedValue: totalValue[0].value || 0
+                estimatedValue: totalValue
             },
             lowStockItems,
             categories
@@ -90,11 +119,17 @@ const getInventoryReport = async (req, res) => {
 
 const getBookingReport = async (req, res) => {
     try {
-        const [totalBookings] = await pool.query('SELECT COUNT(*) as total FROM event_bookings');
-        const [approvedBookings] = await pool.query('SELECT COUNT(*) as total FROM event_bookings WHERE status = "approved"');
+        const [totalBookings] = await pool.query('SELECT COUNT(*) as total FROM bookings');
+        const [approvedBookings] = await pool.query('SELECT COUNT(*) as total FROM bookings WHERE status = "approved"');
         
         // Upcoming bookings
-        const [upcoming] = await pool.query('SELECT event_date, event_type, number_of_guests FROM event_bookings WHERE event_date >= DATE(NOW()) AND status = "approved" ORDER BY event_date ASC LIMIT 5');
+        const [upcoming] = await pool.query(`
+            SELECT event_date, event_type, guest_count as number_of_guests 
+            FROM bookings 
+            WHERE event_date >= DATE(NOW()) AND status != "cancelled" 
+            ORDER BY event_date ASC 
+            LIMIT 5
+        `);
 
         res.json({
             summary: {
@@ -111,8 +146,7 @@ const getBookingReport = async (req, res) => {
 
 const getFoodWasteReport = async (req, res) => {
     try {
-        // We'll calculate a mock waste risk based on expiry dates and stock levels
-        const [items] = await pool.query('SELECT item_name, stock_quantity, expiry_date FROM inventory_items WHERE expiry_date IS NOT NULL');
+        const [items] = await pool.query('SELECT name as item_name, stock as stock_quantity, expiry_date FROM products WHERE expiry_date IS NOT NULL');
         
         const today = new Date();
         const highRisk = [];

@@ -7,8 +7,13 @@ import { mockBeverageCategories } from '../../data/mockBeverages';
 
 import CreatableSelect from 'react-select/creatable';
 
-const AddBeverage = () => {
+const AddBeverage = ({ onBack }) => {
     const navigate = useNavigate();
+
+    const handleBack = () => {
+        if (onBack) onBack();
+        else navigate('/admin/beverages');
+    };
     const [loading, setLoading] = useState(false);
     const [categoriesList, setCategoriesList] = useState([]);
     const [formData, setFormData] = useState({
@@ -129,8 +134,8 @@ const AddBeverage = () => {
             };
 
             await api.post('/beverages', payload);
-            toast.success('Beverage created successfully');
-            navigate('/admin/beverages');
+            toast.success('Beverage added successfully');
+            handleBack();
         } catch (err) {
             toast.error(err?.response?.data?.message || 'Failed to create beverage');
         } finally {
@@ -141,7 +146,7 @@ const AddBeverage = () => {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3">
-                <button onClick={() => navigate('/admin/beverages')} className="p-2 hover:bg-[#C8843B]/10 rounded-lg">
+                <button onClick={handleBack} className="p-2 hover:bg-[#C8843B]/10 rounded-lg">
                     <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div>
