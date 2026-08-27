@@ -39,7 +39,7 @@ const Order = () => {
         const token = localStorage.getItem('token');
         if (!token) {
             toast.error('Please login to place an order.');
-            navigate('/secure-login');
+            navigate('/login');
             return;
         }
 

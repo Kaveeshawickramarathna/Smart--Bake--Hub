@@ -70,7 +70,7 @@ const SmartDeals = () => {
     const handleAddToCart = (deal) => {
         if (!user) {
             toast.error('Please log in to add items to your cart');
-            navigate('/secure-login');
+            navigate('/login');
             return;
         }
         const item = { 

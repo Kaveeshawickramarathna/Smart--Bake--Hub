@@ -1,3 +1,4 @@
+
 services:
   db:
     image: mysql:8.0
@@ -16,8 +17,6 @@ services:
       context: ./backend
       dockerfile: Dockerfile
     container_name: smart_bake_hub_backend
-    env_file:
-      - ./backend/.env
     environment:
       - DB_HOST=db
       - DB_USER=root
@@ -26,10 +25,11 @@ services:
       - DB_PORT=3306
       - PORT=5000
       - JWT_SECRET=your_jwt_secret_here
-      - FRONTEND_URL=http://localhost
-
+      - GEMINI_API_KEY=your_gemini_api_key_here
+      - EMAIL_USER=wijayabakehouse@gmail.com
+      - EMAIL_PASS=ejjg jovn wzld tnrl
     ports:
-      - "5050:5000"
+      - "5000:5000"
     depends_on:
       - db
     volumes:

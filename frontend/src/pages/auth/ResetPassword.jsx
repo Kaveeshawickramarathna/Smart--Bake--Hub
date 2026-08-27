@@ -36,7 +36,7 @@ const ResetPassword = () => {
         try {
             const { data } = await api.post('/auth/reset-password', { email, otp, newPassword });
             toast.success(data.message || 'Password reset successful!');
-            navigate('/secure-login');
+            navigate('/login');
         } catch (error) {
             toast.error(error.response?.data?.message || 'Password reset failed');
         } finally {
@@ -68,7 +68,7 @@ const ResetPassword = () => {
                 </div>
 
                 <div className="mb-12 lg:mb-16">
-                    <Link to="/secure-login" className="inline-flex items-center gap-2 text-xs font-bold text-[#4A3C31] hover:text-[#C8843B] transition-colors border border-transparent hover:border-[#C8843B]/30 bg-white/40 hover:bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm w-max">
+                    <Link to="/login" className="inline-flex items-center gap-2 text-xs font-bold text-[#4A3C31] hover:text-[#C8843B] transition-colors border border-transparent hover:border-[#C8843B]/30 bg-white/40 hover:bg-white/60 backdrop-blur-sm px-4 py-2 rounded-full shadow-sm w-max">
                         <ArrowLeft className="w-4 h-4" /> Back to Login
                     </Link>
                 </div>
