@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { Plus, Eye, EyeOff } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import api from '../../services/api';
 
-const CateringPackages = () => {
+const CateringPackages = ({ onNavigateToAdd }) => {
+    const navigate = useNavigate();
     const [packages, setPackages] = useState([]);
     const [loading, setLoading] = useState(true);
 
@@ -61,10 +62,16 @@ const CateringPackages = () => {
                     <h1 className="text-2xl font-bold text-[#2E1A12] font-serif">Catering Packages</h1>
                     <p className="text-sm text-gray-500 mt-1">Manage catering packages and bundles</p>
                 </div>
-                <Link to="/admin/catering-packages/add" className="bg-[#2E1A12] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#C8843B] transition-colors flex items-center gap-2">
+                <button 
+                    onClick={() => {
+                        if (onNavigateToAdd) onNavigateToAdd();
+                        else navigate('/admin/catering-packages/add');
+                    }}
+                    className="bg-[#2E1A12] text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-[#C8843B] transition-colors flex items-center gap-2 cursor-pointer"
+                >
                     <Plus className="w-4 h-4" />
                     Add Package
-                </Link>
+                </button>
             </div>
 
             {packages.length === 0 ? (
@@ -74,9 +81,15 @@ const CateringPackages = () => {
                     </div>
                     <h3 className="text-lg font-bold text-[#2E1A12] mb-1">No Packages Yet</h3>
                     <p className="text-gray-500 mb-6">Create your first catering package to offer to customers.</p>
-                    <Link to="/admin/catering-packages/add" className="text-[#C8843B] font-medium hover:underline">
+                    <button 
+                        onClick={() => {
+                            if (onNavigateToAdd) onNavigateToAdd();
+                            else navigate('/admin/catering-packages/add');
+                        }}
+                        className="text-[#C8843B] font-medium hover:underline cursor-pointer"
+                    >
                         Create Package
-                    </Link>
+                    </button>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

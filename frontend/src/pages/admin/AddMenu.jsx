@@ -6,8 +6,13 @@ import api from '../../services/api';
 import { mockMenuCategories } from '../../data/mockMenus';
 import CreatableSelect from 'react-select/creatable';
 
-const AddMenu = () => {
+const AddMenu = ({ onBack }) => {
     const navigate = useNavigate();
+
+    const handleBack = () => {
+        if (onBack) onBack();
+        else navigate('/admin/menus');
+    };
     const [loading, setLoading] = useState(false);
     const [categoriesList, setCategoriesList] = useState([]);
     const [formData, setFormData] = useState({
@@ -108,8 +113,8 @@ const AddMenu = () => {
             };
 
             await api.post('/menus', payload);
-            toast.success('Dish created successfully');
-            navigate('/admin/menus');
+            toast.success('Dish added successfully');
+            handleBack();
         } catch (err) {
             toast.error(err?.response?.data?.message || 'Failed to create dish');
         } finally {
@@ -120,7 +125,7 @@ const AddMenu = () => {
     return (
         <div className="space-y-6">
             <div className="flex items-center gap-3">
-                <button onClick={() => navigate('/admin/menus')} className="p-2 hover:bg-[#C8843B]/10 rounded-lg">
+                <button onClick={handleBack} className="p-2 hover:bg-[#C8843B]/10 rounded-lg">
                     <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div>

@@ -169,17 +169,6 @@ const Settings = () => {
                         <Shield className="w-4 h-4" />
                         <span>Security & Password</span>
                     </button>
-                    <button
-                        onClick={() => setActiveSection('store')}
-                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-2xl text-xs font-black transition-all border cursor-pointer ${
-                            activeSection === 'store'
-                                ? 'bg-[#2E1A12] border-[#2E1A12] text-white shadow-md'
-                                : 'bg-white border-[#C8843B]/10 hover:border-[#C8843B]/30 text-[#2E1A12]'
-                        }`}
-                    >
-                        <Store className="w-4 h-4" />
-                        <span>Store Details</span>
-                    </button>
                 </div>
 
                 {/* Form Panels */}
@@ -190,12 +179,12 @@ const Settings = () => {
                             <form onSubmit={handleUpdateProfile} className="space-y-6">
                                 <div>
                                     <h2 className="text-lg font-bold font-serif text-[#2E1A12]">Account Details</h2>
-                                    <p className="text-xs text-gray-400 font-medium">Update your admin profile identity and contact email address.</p>
+                                    <p className="text-xs text-gray-400 font-medium">Update your {user?.role === 'staff' ? 'staff member' : 'admin'} profile identity and contact email address.</p>
                                 </div>
 
                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                     <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Admin Name</label>
+                                        <label className="text-xs font-black text-gray-500 uppercase tracking-wider">{user?.role === 'staff' ? 'Staff Member' : 'Admin'} Name</label>
                                         <div className="relative">
                                             <User className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                                             <input 
@@ -326,85 +315,6 @@ const Settings = () => {
                             </form>
                         )}
 
-                        {activeSection === 'store' && (
-                            <form onSubmit={handleSaveStoreSettings} className="space-y-6">
-                                <div>
-                                    <h2 className="text-lg font-bold font-serif text-[#2E1A12]">General Store Settings</h2>
-                                    <p className="text-xs text-gray-400 font-medium">Configure store location, contact details, and open hours displayed on receipt ledgers.</p>
-                                </div>
-
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Bakery Store Name</label>
-                                        <div className="relative">
-                                            <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                            <input 
-                                                type="text"
-                                                value={storeName}
-                                                onChange={(e) => setStoreName(e.target.value)}
-                                                className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Phone Hotline</label>
-                                        <div className="relative">
-                                            <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                            <input 
-                                                type="text"
-                                                value={storePhone}
-                                                onChange={(e) => setStorePhone(e.target.value)}
-                                                className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
-                                            />
-                                        </div>
-                                    </div>
-
-                                    <div className="space-y-2 md:col-span-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Address Location</label>
-                                        <input 
-                                            type="text"
-                                            value={storeAddress}
-                                            onChange={(e) => setStoreAddress(e.target.value)}
-                                            className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 px-4 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Tax & Levy Percentage (%)</label>
-                                        <input 
-                                            type="number"
-                                            value={taxRate}
-                                            onChange={(e) => setTaxRate(e.target.value)}
-                                            className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 px-4 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
-                                        />
-                                    </div>
-
-                                    <div className="space-y-2">
-                                        <label className="text-xs font-black text-gray-500 uppercase tracking-wider">Operating Hours</label>
-                                        <div className="relative">
-                                            <Clock className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-                                            <input 
-                                                type="text"
-                                                value={openHours}
-                                                onChange={(e) => setOpenHours(e.target.value)}
-                                                className="w-full bg-gray-50/50 border border-gray-200/80 rounded-2xl py-3.5 pl-11 pr-4 text-sm font-semibold focus:outline-none focus:border-[#C8843B]/50 transition-all text-[#2E1A12]"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <div className="pt-4 border-t border-[#F7F4ED] flex justify-end">
-                                    <button
-                                        type="submit"
-                                        className="flex items-center gap-2 bg-[#2E1A12] hover:bg-[#C8843B] text-white px-6 py-3 rounded-2xl text-xs font-black shadow-md hover:shadow-lg transition-all duration-300 cursor-pointer"
-                                    >
-                                        <Save className="w-4 h-4 text-[#C8843B]" />
-                                        <span>Save Store Settings</span>
-                                    </button>
-                                </div>
-                            </form>
-                        )}
 
                     </div>
                 </div>
