@@ -270,6 +270,34 @@ INSERT INTO `chat_sessions` VALUES ('session_jq2i1uzo7',21,'chamodi','admin_acti
 UNLOCK TABLES;
 
 --
+-- Table structure for table `daily_forecasts`
+--
+
+DROP TABLE IF EXISTS `daily_forecasts`;
+/*!40101 SET @saved_cs_client     = @@character_set_client */;
+/*!50503 SET character_set_client = utf8mb4 */;
+CREATE TABLE `daily_forecasts` (
+  `id` int NOT NULL AUTO_INCREMENT,
+  `forecast_date` date NOT NULL,
+  `source` varchar(20) DEFAULT 'heuristic',
+  `payload` json NOT NULL,
+  `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `forecast_date` (`forecast_date`)
+) ENGINE=InnoDB AUTO_INCREMENT=3 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+/*!40101 SET character_set_client = @saved_cs_client */;
+
+--
+-- Dumping data for table `daily_forecasts`
+--
+
+LOCK TABLES `daily_forecasts` WRITE;
+/*!40000 ALTER TABLE `daily_forecasts` DISABLE KEYS */;
+INSERT INTO `daily_forecasts` VALUES (1,'2026-08-27','heuristic','{\"topItems\": [{\"icon\": \"🍞\", \"name\": \"Vegetable Soup\", \"price\": 400, \"change\": \"+0.0%\", \"demand\": \"1 units/day\", \"category\": \"General\", \"recommendedStock\": 1}, {\"icon\": \"🍞\", \"name\": \"Chicken With Egg Soup\", \"price\": 450, \"change\": \"+0.0%\", \"demand\": \"1 units/day\", \"category\": \"General\", \"recommendedStock\": 1}, {\"icon\": \"🍞\", \"name\": \"Vegetable Noodles\", \"price\": 600, \"change\": \"+0.0%\", \"demand\": \"1 units/day\", \"category\": \"General\", \"recommendedStock\": 1}, {\"icon\": \"🍞\", \"name\": \"vegitable fride rice\", \"price\": 0, \"change\": \"+0.0%\", \"demand\": \"1 units/day\", \"category\": \"Fried Rice\", \"recommendedStock\": 1}, {\"icon\": \"🍞\", \"name\": \"HOT & SOUR CHICKEN SOUP\", \"price\": 500, \"change\": \"+0.0%\", \"demand\": \"1 units/day\", \"category\": \"Soups\", \"recommendedStock\": 1}, {\"icon\": \"🍞\", \"name\": \"TOM YAM SEAFOOD SOUP\", \"price\": 550, \"change\": \"+0.0%\", \"demand\": \"1 units/day\", \"category\": \"Soups\", \"recommendedStock\": 1}], \"heatmapData\": [[1, 2, 2, 2, 2, 2, 1], [4, 3, 2, 1, 5, 4, 4], [5, 1, 4, 5, 4, 5, 5], [3, 5, 4, 3, 3, 3, 3]], \"itemsGrowth\": \"+0.0%\", \"salesGrowth\": \"+0.0%\", \"categoryData\": [{\"name\": \"Menu\", \"color\": \"#2E1A12\", \"value\": 5}, {\"name\": \"Fried Rice\", \"color\": \"#C8843B\", \"value\": 2}, {\"name\": \"Cold Beverages\", \"color\": \"#D4BFA0\", \"value\": 1}, {\"name\": \"Fresh Juice\", \"color\": \"#E8DCC8\", \"value\": 1}], \"forecastData\": [{\"name\": \"Fri\\nAug 28\", \"actual\": null, \"forecast\": 4690, \"confidence\": [3987, 5394]}, {\"name\": \"Sat\\nAug 29\", \"actual\": null, \"forecast\": 4690, \"confidence\": [3987, 5394]}, {\"name\": \"Sun\\nAug 30\", \"actual\": null, \"forecast\": 4690, \"confidence\": [3987, 5394]}, {\"name\": \"Mon\\nAug 31\", \"actual\": null, \"forecast\": 4690, \"confidence\": [3987, 5394]}, {\"name\": \"Tue\\nSep 1\", \"actual\": null, \"forecast\": 4690, \"confidence\": [3987, 5394]}, {\"name\": \"Wed\\nSep 2\", \"actual\": null, \"forecast\": 4690, \"confidence\": [3987, 5394]}, {\"name\": \"Thu\\nSep 3\", \"actual\": null, \"forecast\": 4690, \"confidence\": [3987, 5394]}], \"ordersGrowth\": \"+0.0%\", \"peakHourData\": [{\"time\": \"08:00\", \"demand\": 0}, {\"time\": \"10:00\", \"demand\": 0}, {\"time\": \"12:00\", \"demand\": 4}, {\"time\": \"14:00\", \"demand\": 0}, {\"time\": \"16:00\", \"demand\": 0}, {\"time\": \"18:00\", \"demand\": 0}, {\"time\": \"20:00\", \"demand\": 0}, {\"time\": \"22:00\", \"demand\": 0}], \"forecastedOrders\": 9, \"aiRecommendations\": [{\"type\": \"stock\", \"title\": \"Restock top category: Menu\", \"description\": \"This category has the highest recent order volume.\"}], \"highDemandItemsCount\": 1, \"totalForecastedSales\": 4690, \"expectedRevenueIncrease\": \"Rs. 0 (heuristic baseline, no growth data yet)\", \"predictedProductionQuantity\": 9}','2026-08-27 02:57:40');
+/*!40000 ALTER TABLE `daily_forecasts` ENABLE KEYS */;
+UNLOCK TABLES;
+
+--
 -- Table structure for table `dish_categories`
 --
 
@@ -573,4 +601,4 @@ UNLOCK TABLES;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
 /*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
 
--- Dump completed on 2026-08-27  0:04:37
+-- Dump completed on 2026-08-27  3:31:21

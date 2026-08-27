@@ -18,7 +18,7 @@ const Home = () => {
         if (!user) {
             e.preventDefault();
             toast.error("Login or Signup Required to book an event!");
-            navigate('/secure-login');
+            navigate('/login');
         } else {
             navigate('/bookings');
         }
