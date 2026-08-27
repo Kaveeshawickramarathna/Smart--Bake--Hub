@@ -60,7 +60,7 @@ const AdminLayout = () => {
     };
 
     const navigation = [
-        { name: 'Dashboard', href: user?.role === 'staff' ? '/staff' : '/admin', icon: LayoutDashboard },
+        { name: 'Dashboard', href: user?.role === 'staff' ? '/secure-staff-portal' : '/admin', icon: LayoutDashboard },
         { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
         { name: 'Dishes', href: '/admin/menus', icon: Utensils },
         { name: 'Beverages', href: '/admin/beverages', icon: Coffee },

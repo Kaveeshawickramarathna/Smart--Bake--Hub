@@ -24,7 +24,7 @@ const Login = () => {
             if (data.role === 'admin') {
                 window.location.href = '/admin';
             } else if (data.role === 'staff') {
-                window.location.href = '/staff';
+                window.location.href = '/secure-staff-portal';
             } else {
                 window.location.href = '/profile';
             }

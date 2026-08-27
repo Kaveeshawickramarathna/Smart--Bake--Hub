@@ -239,7 +239,7 @@ const EventBooking = () => {
     const submitBooking = async () => {
         if (!user) {
             toast.error('Please login to submit a booking.');
-            navigate('/login');
+            navigate('/secure-login');
             return;
         }
 

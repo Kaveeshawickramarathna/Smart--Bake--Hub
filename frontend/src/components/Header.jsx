@@ -90,7 +90,7 @@ const Header = () => {
                             </button>
                         </div>
                     ) : (
-                        <Link to="/login" className="hidden md:flex bg-[#2E1A12] text-white font-medium px-6 py-2.5 rounded-full text-sm hover:bg-[#C8843B] transition-colors">
+                        <Link to="/secure-login" className="hidden md:flex bg-[#2E1A12] text-white font-medium px-6 py-2.5 rounded-full text-sm hover:bg-[#C8843B] transition-colors">
                             Login / Register
                         </Link>
                     )}
@@ -133,7 +133,7 @@ const Header = () => {
                             </>
                         ) : (
                             <Link 
-                                to="/login" 
+                                to="/secure-login" 
                                 onClick={() => setMobileMenuOpen(false)} 
                                 className="bg-[#2E1A12] text-white font-medium px-6 py-2.5 rounded-full text-center text-sm hover:bg-[#C8843B] transition-colors w-full"
                             >

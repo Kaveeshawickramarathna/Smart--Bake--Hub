@@ -25,7 +25,7 @@ const StaffLogin = () => {
             
             login(data);
             toast.success(`Welcome to the Staff Dashboard, ${data.name}`);
-            navigate('/staff');
+            navigate('/secure-staff-portal');
         } catch (error) {
             toast.error(error.response?.data?.message || 'Login failed');
         }
