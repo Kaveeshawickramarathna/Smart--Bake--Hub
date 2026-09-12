@@ -4,6 +4,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import ScrollReveal from '../../components/ScrollReveal';
+import CardPaymentModal from '../../components/CardPaymentModal';
 import toast from 'react-hot-toast';
 import { ShoppingBag, CreditCard, Trash2, ArrowRight, Utensils, Package, Plus, Minus } from 'lucide-react';
 import api from '../../services/api';
@@ -11,9 +12,12 @@ import api from '../../services/api';
 const Order = () => {
     const [items, setItems] = useState([]);
     const [orderType, setOrderType] = useState('takeaway'); // 'dine-in' or 'takeaway'
+    const [paymentMethod, setPaymentMethod] = useState('online'); // 'online' (Stripe) or 'counter'
     const [tableNumber, setTableNumber] = useState('');
     const [specialNote, setSpecialNote] = useState('');
     const [loading, setLoading] = useState(false);
+    const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+    const [pendingOrderId, setPendingOrderId] = useState(null);
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -104,15 +108,24 @@ const Order = () => {
                 append_to_order_id: appendToOrderId
             });
             
+            const createdOrderId = response.data?.orderId || response.data?.appendedOrderId;
+
             // Save this order as the recent order
             localStorage.setItem('recentOrder', JSON.stringify({
-                orderId: response.data?.orderId || response.data?.appendedOrderId,
+                orderId: createdOrderId,
                 timestamp: Date.now()
             }));
 
             clearCart();
-            
             setItems([]);
+
+            // If online payment selected via Card Payment
+            if (paymentMethod === 'online' && createdOrderId) {
+                setPendingOrderId(createdOrderId);
+                setIsCardModalOpen(true);
+                return;
+            }
+            
             toast.success('Order Placed Successfully! We will notify you when it is ready.', { 
                 icon: '🎉',
                 duration: 6000,
@@ -123,7 +136,7 @@ const Order = () => {
                     maxWidth: '400px'
                 },
             });
-            navigate('/');
+            navigate('/profile');
         } catch (error) {
             console.error('Checkout error:', error);
             toast.error('Failed to place order. Please try again.');
@@ -251,6 +264,26 @@ const Order = () => {
                                             </div>
                                         </div>
 
+                                        <div className="space-y-3">
+                                            <label className="text-xs font-bold text-gray-500 uppercase">Payment Method</label>
+                                            <div className="grid grid-cols-2 gap-2">
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setPaymentMethod('online')}
+                                                    className={`py-2 px-3 flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${paymentMethod === 'online' ? 'bg-[#2E1A12] text-white border-[#2E1A12]' : 'bg-transparent text-gray-400 border-gray-200 hover:border-[#2E1A12] hover:text-[#2E1A12]'}`}
+                                                >
+                                                    <CreditCard className="w-4 h-4" /> Card Payment
+                                                </button>
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setPaymentMethod('counter')}
+                                                    className={`py-2 px-3 flex items-center justify-center gap-2 rounded-xl text-xs font-bold transition-all border cursor-pointer ${paymentMethod === 'counter' ? 'bg-[#2E1A12] text-white border-[#2E1A12]' : 'bg-transparent text-gray-400 border-gray-200 hover:border-[#2E1A12] hover:text-[#2E1A12]'}`}
+                                                >
+                                                    Pay at Counter
+                                                </button>
+                                            </div>
+                                        </div>
+
                                         {orderType === 'dine-in' && (
                                             <div className="space-y-3 pt-3 border-t border-gray-100">
                                                 <label className="text-xs font-bold text-gray-500 uppercase">Table Number (Optional)</label>
@@ -297,7 +330,7 @@ const Order = () => {
                                                 disabled={loading}
                                                 className="w-full bg-[#2E1A12] hover:bg-[#C8843B] text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow-md transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
                                             >
-                                                {loading ? 'Processing...' : 'Place Order'} <ArrowRight className="w-4 h-4" />
+                                                {loading ? 'Processing...' : 'Pay'} <ArrowRight className="w-4 h-4" />
                                             </button>
                                             <button 
                                                 onClick={handleClearCart} 
@@ -314,6 +347,16 @@ const Order = () => {
                     )}
                 </main>
             </div>
+
+            <CardPaymentModal 
+                isOpen={isCardModalOpen} 
+                onClose={() => {
+                    setIsCardModalOpen(false);
+                    navigate('/profile');
+                }} 
+                orderId={pendingOrderId} 
+                totalAmount={total} 
+            />
 
             <Footer />
         </div>

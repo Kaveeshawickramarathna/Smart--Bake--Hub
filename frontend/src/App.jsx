@@ -11,6 +11,7 @@ import Register from './pages/auth/Register';
 import SmartDeals from './pages/public/SmartDeals';
 import MenusPage from './pages/public/Menus';
 import OrderPage from './pages/public/Order';
+import OrderSuccess from './pages/public/OrderSuccess';
 import Profile from './pages/public/Profile';
 import PublicCateringPackages from './pages/public/PublicCateringPackages';
 import AboutUs from './pages/public/AboutUs';
@@ -114,6 +115,7 @@ function App() {
                 <Route path="/smart-deals" element={<SmartDeals />} />
                 <Route path="/menus" element={<MenusPage />} />
                 <Route path="/order" element={<PrivateRoute><OrderPage /></PrivateRoute>} />
+                <Route path="/order/success" element={<PrivateRoute><OrderSuccess /></PrivateRoute>} />
                 <Route path="/login" element={<Login />} />
                 <Route path="/register" element={<Register />} />
                 <Route path="/forgot-password" element={<ForgotPassword />} />
