@@ -13,7 +13,6 @@ const AdminLayout = () => {
     const { logout, user } = useAuthStore();
     const navigate = useNavigate();
     const location = useLocation();
-    const [isAiInsightsOpen, setIsAiInsightsOpen] = useState(true);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
@@ -118,42 +117,7 @@ const AdminLayout = () => {
                             );
                         })}
 
-                        {/* AI Insights Dropdown */}
-                        <div className="pt-2 pb-1">
-                            <button 
-                                onClick={() => setIsAiInsightsOpen(!isAiInsightsOpen)}
-                                className={`w-full flex items-center justify-between px-4 py-2.5 rounded-xl transition-all ${isAiInsightsOpen || location.pathname.includes('/admin/ai') ? 'bg-[#2E1A12] text-white shadow-md' : 'text-[#2E1A12]/80 hover:bg-[#C8843B]/10 hover:text-[#2E1A12]'}`}
-                            >
-                                <div className="flex items-center space-x-3">
-                                    <Sparkles className="w-5 h-5 text-[#C8843B]" strokeWidth={2} />
-                                    <span className="font-medium text-sm">AI Insights</span>
-                                </div>
-                                <ChevronDown className={`w-4 h-4 transition-transform ${isAiInsightsOpen ? 'rotate-180' : ''}`} />
-                            </button>
-                            
-                            {isAiInsightsOpen && (
-                                <div className="mt-2 ml-4 pl-6 border-l border-[#C8843B]/30 space-y-1 relative">
-                                    {/* Dynamic Active Indicator Line */}
-                                    {location.pathname === '/admin' ? (
-                                        <div className="absolute left-[-1px] top-3 w-[2px] bg-[#C8843B] rounded-r h-4 transition-all duration-300"></div>
-                                    ) : location.pathname === '/admin/ai/waste' ? (
-                                        <div className="absolute left-[-1px] top-[44px] w-[2px] bg-[#C8843B] rounded-r h-4 transition-all duration-300"></div>
-                                    ) : null}
-                                    <Link 
-                                        to="/admin" 
-                                        className={`block py-2 text-sm font-medium transition-colors ${location.pathname === '/admin' ? 'text-[#C8843B]' : 'text-[#2E1A12]/70 hover:text-[#2E1A12]'}`}
-                                    >
-                                        Demand Forecasting Management
-                                    </Link>
-                                    <Link 
-                                        to="/admin/ai/waste" 
-                                        className={`block py-2 text-sm font-medium transition-colors ${location.pathname === '/admin/ai/waste' ? 'text-[#C8843B]' : 'text-[#2E1A12]/70 hover:text-[#2E1A12]'}`}
-                                    >
-                                        Food Waste Reduction
-                                    </Link>
-                                </div>
-                            )}
-                        </div>
+
 
                     </nav>
                 </div>
