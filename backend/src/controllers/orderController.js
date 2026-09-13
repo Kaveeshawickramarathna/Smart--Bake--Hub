@@ -15,10 +15,10 @@ const placeOrder = async (req, res) => {
         let orderId = null;
         let isAppended = false;
 
-        // Check if we should append to an existing order
+        // Check if we should append to an existing unpaid order
         if (append_to_order_id) {
             const [existingOrders] = await pool.query(
-                'SELECT id, status, special_note FROM orders WHERE id = ? AND user_id = ? AND status = "pending" AND created_at >= NOW() - INTERVAL 5 MINUTE',
+                'SELECT id, status, special_note FROM orders WHERE id = ? AND user_id = ? AND status = "pending" AND (payment_status IS NULL OR payment_status != "paid") AND created_at >= NOW() - INTERVAL 5 MINUTE',
                 [append_to_order_id, userId]
             );
 
@@ -41,11 +41,13 @@ const placeOrder = async (req, res) => {
             }
         }
 
+        const { payment_method } = req.body;
+
         // Create new order if appending failed or wasn't requested
         if (!isAppended) {
             const [orderResult] = await pool.query(
-                'INSERT INTO orders (user_id, total_amount, order_type, table_number, status, special_note) VALUES (?, ?, ?, ?, ?, ?)',
-                [userId, totalAmount, order_type || 'takeaway', req.body.table_number || null, 'pending', special_note || null]
+                'INSERT INTO orders (user_id, total_amount, order_type, table_number, status, special_note, payment_method) VALUES (?, ?, ?, ?, ?, ?, ?)',
+                [userId, totalAmount, order_type || 'takeaway', req.body.table_number || null, 'pending', special_note || null, payment_method || null]
             );
             orderId = orderResult.insertId;
         }

@@ -12,8 +12,13 @@ const OrderSuccess = () => {
     const [status, setStatus] = useState('checking'); // 'checking' | 'paid' | 'unpaid' | 'error'
     const orderId = searchParams.get('orderId');
     const sessionId = searchParams.get('session_id');
+    const method = searchParams.get('method');
 
     useEffect(() => {
+        if (method === 'cash') {
+            setStatus('cash');
+            return;
+        }
         const confirm = async () => {
             if (!sessionId) {
                 setStatus('error');
@@ -28,7 +33,7 @@ const OrderSuccess = () => {
             }
         };
         confirm();
-    }, [sessionId]);
+    }, [sessionId, method]);
 
     return (
         <div className="min-h-screen bg-[#fef9e1] font-sans flex flex-col justify-between text-[#2E1A12]">
@@ -48,6 +53,19 @@ const OrderSuccess = () => {
                                     <CheckCircle className="w-16 h-16 text-emerald-500" />
                                     <h2 className="text-xl font-bold font-serif">Payment successful!</h2>
                                     <p className="text-xs text-gray-400">Order #{orderId} has been paid and sent to the kitchen.</p>
+                                    <button
+                                        onClick={() => navigate('/profile')}
+                                        className="bg-[#2E1A12] hover:bg-[#C8843B] text-white font-bold text-xs py-3.5 px-8 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"
+                                    >
+                                        View My Orders <ArrowRight className="w-4 h-4" />
+                                    </button>
+                                </>
+                            )}
+                            {status === 'cash' && (
+                                <>
+                                    <CheckCircle className="w-16 h-16 text-[#C8843B]" />
+                                    <h2 className="text-xl font-bold font-serif">Order Placed Successfully!</h2>
+                                    <p className="text-xs text-gray-500">Order #{orderId} has been sent to the kitchen. Please pay with <strong>Cash</strong> upon delivery or at the counter.</p>
                                     <button
                                         onClick={() => navigate('/profile')}
                                         className="bg-[#2E1A12] hover:bg-[#C8843B] text-white font-bold text-xs py-3.5 px-8 rounded-xl transition-all shadow-md flex items-center gap-2 cursor-pointer"

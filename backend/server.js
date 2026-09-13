@@ -30,6 +30,7 @@ const inventoryRoutes = require('./src/routes/inventoryRoutes');
 const addonRoutes = require('./src/routes/addonRoutes');
 const cakeDesignRoutes = require('./src/routes/cakeDesignRoutes');
 const cakeOptionRoutes = require('./src/routes/cakeOptionRoutes');
+const paymentRoutes = require('./src/routes/paymentRoutes');
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
@@ -46,6 +47,7 @@ app.use('/api/inventory', inventoryRoutes);
 app.use('/api/addons', addonRoutes);
 app.use('/api/cake-designs', cakeDesignRoutes);
 app.use('/api/cake-options', cakeOptionRoutes);
+app.use('/api/payments', paymentRoutes);
 app.get('/', (req, res) => {
     res.send('Smart Bake Hub API is running...');
 });

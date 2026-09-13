@@ -5,7 +5,7 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 import ScrollReveal from '../../components/ScrollReveal';
 import toast from 'react-hot-toast';
-import { ShoppingBag, CreditCard, Trash2, ArrowRight, Utensils, Package, Plus, Minus } from 'lucide-react';
+import { ShoppingBag, CreditCard, Trash2, ArrowRight, Utensils, Package, Plus, Minus, Banknote } from 'lucide-react';
 import api from '../../services/api';
 
 const Order = () => {
@@ -14,6 +14,7 @@ const Order = () => {
     const [tableNumber, setTableNumber] = useState('');
     const [specialNote, setSpecialNote] = useState('');
     const [loading, setLoading] = useState(false);
+    const [loadingMethod, setLoadingMethod] = useState(null); // 'card' | 'cash'
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -33,7 +34,7 @@ const Order = () => {
         }
     }, [location.state]);
 
-    const handleCheckout = async () => {
+    const handleCheckout = async (paymentMethod = 'card') => {
         if (!items || items.length === 0) return;
         
         const token = localStorage.getItem('token');
@@ -44,6 +45,7 @@ const Order = () => {
         }
 
         setLoading(true);
+        setLoadingMethod(paymentMethod);
         try {
             const formattedItems = items.map(item => {
                 let productId = null;
@@ -101,34 +103,38 @@ const Order = () => {
                 order_type: orderType,
                 table_number: orderType === 'dine-in' ? tableNumber : null,
                 special_note: specialNote,
+                payment_method: paymentMethod,
                 append_to_order_id: appendToOrderId
             });
-            
-            // Save this order as the recent order
-            localStorage.setItem('recentOrder', JSON.stringify({
-                orderId: response.data?.orderId || response.data?.appendedOrderId,
-                timestamp: Date.now()
-            }));
 
-            clearCart();
+            const orderId = response.data?.orderId || response.data?.appendedOrderId;
             
-            setItems([]);
-            toast.success('Order Placed Successfully! We will notify you when it is ready.', { 
-                icon: '🎉',
-                duration: 6000,
-                style: {
-                    borderRadius: '10px',
-                    background: '#2E1A12',
-                    color: '#fff',
-                    maxWidth: '400px'
-                },
-            });
-            navigate('/');
+            // Clear recent order reference to prevent appending to paid/processed orders
+            localStorage.removeItem('recentOrder');
+
+            if (paymentMethod === 'card') {
+                const { data: checkout } = await api.post('/payments/create-checkout-session', {
+                    orderId
+                });
+
+                clearCart();
+                setItems([]);
+                window.location.href = checkout.url;
+            } else {
+                clearCart();
+                setItems([]);
+                toast.success('Order Placed Successfully! (Pay with Cash)', {
+                    icon: '💵',
+                    duration: 5000
+                });
+                navigate(`/order/success?orderId=${orderId}&method=cash`);
+            }
         } catch (error) {
             console.error('Checkout error:', error);
-            toast.error('Failed to place order. Please try again.');
+            toast.error(error.response?.data?.message || 'Failed to place order. Please try again.');
         } finally {
             setLoading(false);
+            setLoadingMethod(null);
         }
     };
 
@@ -292,13 +298,25 @@ const Order = () => {
                                         </div>
 
                                         <div className="pt-2 flex flex-col gap-3 font-sans">
-                                            <button 
-                                                onClick={handleCheckout} 
-                                                disabled={loading}
-                                                className="w-full bg-[#2E1A12] hover:bg-[#C8843B] text-white font-bold text-xs py-3.5 px-4 rounded-xl shadow-md transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
-                                            >
-                                                {loading ? 'Processing...' : 'Place Order'} <ArrowRight className="w-4 h-4" />
-                                            </button>
+                                            <div className="flex flex-col sm:flex-row gap-2.5">
+                                                <button 
+                                                    onClick={() => handleCheckout('card')} 
+                                                    disabled={loading}
+                                                    className="flex-1 bg-[#2E1A12] hover:bg-[#C8843B] text-white font-bold text-xs py-3.5 px-3 rounded-xl shadow-md transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                                >
+                                                    <CreditCard className="w-4 h-4 text-[#C8843B]" />
+                                                    {loading && loadingMethod === 'card' ? 'Processing...' : 'Card Payment'}
+                                                </button>
+                                                <button 
+                                                    onClick={() => handleCheckout('cash')} 
+                                                    disabled={loading}
+                                                    className="flex-1 bg-[#C8843B] hover:bg-[#2E1A12] text-white font-bold text-xs py-3.5 px-3 rounded-xl shadow-md transition-all duration-300 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50"
+                                                >
+                                                    <Banknote className="w-4 h-4 text-amber-200" />
+                                                    {loading && loadingMethod === 'cash' ? 'Placing Order...' : 'Cash Payment'}
+                                                </button>
+                                            </div>
+
                                             <button 
                                                 onClick={handleClearCart} 
                                                 disabled={loading}
