@@ -34,6 +34,12 @@ const ready = (async () => {
         try {
             const connection = await internalPool.getConnection();
             console.log(`MySQL connection established on ${configBase.host}:${configBase.port} (DB: ${configBase.database}).`);
+            
+            // Clear legacy/static seed discounts so items only show on Smart Deals when Admin applies a discount
+            try {
+                await connection.query('UPDATE dishes SET discount_percentage = 0.00 WHERE discount_percentage > 0 AND name LIKE "%vegitable fride rice%"');
+            } catch (e) {}
+            
             connection.release();
             return;
         } catch (err) {

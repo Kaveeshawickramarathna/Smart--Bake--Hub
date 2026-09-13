@@ -1,9 +1,9 @@
 const express = require('express');
 const router = express.Router();
 const { createCheckoutSession, confirmPayment } = require('../controllers/paymentController');
-const { protect } = require('../middleware/authMiddleware');
+const { protect, optionalAuth } = require('../middleware/authMiddleware');
 
-router.post('/create-checkout-session', protect, createCheckoutSession);
-router.get('/confirm/:sessionId', protect, confirmPayment);
+router.post('/create-checkout-session', optionalAuth, createCheckoutSession);
+router.get('/confirm/:sessionId', optionalAuth, confirmPayment);
 
 module.exports = router;

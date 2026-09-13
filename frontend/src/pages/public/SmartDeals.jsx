@@ -68,11 +68,6 @@ const SmartDeals = () => {
     }, []);
 
     const handleAddToCart = (deal) => {
-        if (!user) {
-            toast.error('Please log in to add items to your cart');
-            navigate('/login');
-            return;
-        }
         const item = { 
             id: deal.deal_id, 
             productId: deal.item_type === 'product' ? deal.id : null, 
@@ -83,7 +78,7 @@ const SmartDeals = () => {
             quantity: 1 
         };
         addToCart(item);
-        toast.success('Added to cart');
+        toast.success('Added to cart', { icon: '🛒' });
     };
 
     return (

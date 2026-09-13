@@ -38,4 +38,34 @@ const staff = (req, res, next) => {
     }
 };
 
-module.exports = { protect, admin, staff };
+const optionalAuth = async (req, res, next) => {
+    let token;
+    if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+        try {
+            token = req.headers.authorization.split(' ')[1];
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            
+            const [users] = await pool.query('SELECT * FROM users WHERE id = ?', [decoded.id]);
+            if (users.length > 0) {
+                req.user = users[0];
+                return next();
+            }
+        } catch (error) {
+            // Token error, fallback to guest mode
+        }
+    }
+    
+    try {
+        const [guests] = await pool.query('SELECT * FROM users WHERE role = "customer" ORDER BY id ASC LIMIT 1');
+        if (guests.length > 0) {
+            req.user = guests[0];
+        } else {
+            req.user = { id: 1, name: 'Guest Customer', role: 'customer' };
+        }
+    } catch (e) {
+        req.user = { id: 1, name: 'Guest Customer', role: 'customer' };
+    }
+    next();
+};
+
+module.exports = { protect, optionalAuth, admin, staff };

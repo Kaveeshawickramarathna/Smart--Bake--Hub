@@ -330,44 +330,56 @@ const Home = () => {
                     </ScrollReveal>
                 </section>
 
-                {/* Premium Smart Deals CTA Banner */}
-                <section className="max-w-[1100px] mx-auto px-6 py-2 mb-10">
+                {/* Premium Smart Deals CTA Banner with Compact QR Code */}
+                <section className="max-w-[880px] mx-auto px-6 py-1 mb-8">
                     <ScrollReveal variant="zoom-in" duration={900}>
-                        <Link to="/smart-deals" className="block relative overflow-hidden rounded-3xl shadow-[0_15px_30px_-10px_rgba(46,26,18,0.15)] group bg-[#2c1d11]">
+                        <div className="relative overflow-hidden rounded-2xl shadow-[0_10px_25px_-5px_rgba(46,26,18,0.12)] bg-[#2c1d11] border border-[#d68b3b]/30">
                             <div 
-                                className="absolute inset-0 bg-cover bg-center bg-no-repeat transition-transform duration-1000 group-hover:scale-105"
+                                className="absolute inset-0 bg-cover bg-center bg-no-repeat opacity-20 pointer-events-none"
                                 style={{ backgroundImage: 'url("https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=2000&auto=format&fit=crop")' }}
                             ></div>
-                            <div className="absolute inset-0 bg-gradient-to-r from-[#1A110B] via-[#1A110B]/80 to-transparent"></div>
-                            <div className="absolute inset-0 bg-gradient-to-t from-[#1A110B]/80 via-transparent to-transparent opacity-80"></div>
-                            <div className="absolute inset-0 bg-black/20"></div>
-                            <div className="absolute -top-32 -left-32 w-64 h-64 bg-[#d68b3b] rounded-full mix-blend-overlay filter blur-[80px] opacity-40 group-hover:opacity-60 transition-opacity duration-700"></div>
+                            <div className="absolute inset-0 bg-gradient-to-r from-[#1A110B] via-[#1A110B]/90 to-[#2c1d11]/80"></div>
+                            <div className="absolute -top-32 -left-32 w-64 h-64 bg-[#d68b3b] rounded-full mix-blend-overlay filter blur-[80px] opacity-40"></div>
 
-                            <div className="relative z-10 px-6 py-6 sm:px-10 sm:py-8 flex flex-col md:flex-row items-center justify-between gap-8">
-                                <div className="flex-1 max-w-xl z-20">
-                                    <div className="inline-flex items-center gap-1.5 bg-white/10 backdrop-blur-md border border-white/20 text-[#fef9e1] px-2.5 py-1 rounded-full mb-3 transform transition-transform group-hover:-translate-y-1">
+                            <div className="relative z-10 px-5 py-5 sm:px-7 sm:py-5 flex flex-col sm:flex-row items-center justify-between gap-6">
+                                <div className="flex-1 text-center sm:text-left">
+                                    <div className="inline-flex items-center gap-1.5 bg-[#d68b3b]/20 border border-[#d68b3b]/40 text-[#fef9e1] px-2.5 py-1 rounded-full mb-2">
                                         <Sparkles className="w-3 h-3 text-[#d68b3b]" />
-                                        <span className="text-[9px] font-bold uppercase tracking-widest">Limited Time Offers</span>
+                                        <span className="text-[9px] font-bold uppercase tracking-widest text-[#d68b3b]">Instant QR Discount</span>
                                     </div>
-                                    <h3 className="text-2xl md:text-3xl lg:text-[2.25rem] text-white font-bold font-serif leading-tight mb-2.5 drop-shadow-md">
-                                        Unlock <span className="text-[#d68b3b] italic">Exclusive</span> Savings
+                                    <h3 className="text-xl sm:text-2xl text-white font-bold font-serif leading-tight mb-2 drop-shadow-md">
+                                        Scan QR Code for <span className="text-[#d68b3b] italic">Special Deals</span> & Buy
                                     </h3>
-                                    <p className="text-[#e6dfd5] text-xs sm:text-sm opacity-95 mb-4 max-w-md">
-                                        Grab our freshly baked daily specials before they're gone! Click to view all live active deals.
+                                    <p className="text-[#e6dfd5] text-xs opacity-95 mb-4 max-w-sm">
+                                        Scan with camera or click to unlock live discounted bakery items. Pay via Card or Cash — guest checkout supported!
                                     </p>
 
-                                    <div className="relative inline-flex group/btn">
-                                        <div className="absolute -inset-1 bg-gradient-to-r from-[#d68b3b] to-[#f4a261] rounded-full blur opacity-30 group-hover/btn:opacity-80 transition duration-500"></div>
-                                        <div className="relative bg-[#d68b3b] text-white px-5 py-2 rounded-full font-bold text-xs flex items-center gap-2 overflow-hidden shadow-lg border border-white/10">
-                                            <span className="relative z-10">Explore Deals</span>
-                                            <div className="w-5 h-5 rounded-full bg-white/20 flex items-center justify-center relative z-10 group-hover/btn:translate-x-1 transition-transform">
-                                                <ArrowRight className="w-3 h-3" />
-                                            </div>
-                                        </div>
+                                    <div className="flex flex-wrap items-center justify-center sm:justify-start gap-3">
+                                        <Link 
+                                            to="/smart-deals"
+                                            className="bg-[#d68b3b] hover:bg-[#b06f2c] text-white px-4 py-2 rounded-full font-bold text-xs flex items-center gap-1.5 transition-all shadow-md border border-white/10"
+                                        >
+                                            <Utensils className="w-3.5 h-3.5" /> View Discounted Items
+                                        </Link>
                                     </div>
                                 </div>
+
+                                {/* Compact QR Code Display Card */}
+                                <Link to="/smart-deals" className="flex flex-col items-center bg-white/95 backdrop-blur-md p-3.5 rounded-xl border border-white/30 shadow-xl shrink-0 group transition-transform hover:scale-105 cursor-pointer">
+                                    <div className="relative p-1.5 bg-white rounded-lg border border-amber-200 shadow-inner">
+                                        <img 
+                                            src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(typeof window !== 'undefined' ? window.location.origin + '/smart-deals' : 'http://localhost/smart-deals')}`} 
+                                            alt="Smart Discount QR Code" 
+                                            className="w-28 h-28 sm:w-32 sm:h-32 object-contain"
+                                        />
+                                    </div>
+                                    <div className="mt-2 flex items-center gap-1 text-[#2c1d11] font-bold text-[11px] font-serif">
+                                        <QrCode className="w-3.5 h-3.5 text-[#d68b3b]" /> Scan or Click to Claim Deals
+                                    </div>
+                                    <span className="text-[9px] text-gray-500 font-medium mt-0.5">Available for all users (Guest & Member)</span>
+                                </Link>
                             </div>
-                        </Link>
+                        </div>
                     </ScrollReveal>
                 </section>
 

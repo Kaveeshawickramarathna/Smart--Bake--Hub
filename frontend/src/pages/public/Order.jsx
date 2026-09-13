@@ -37,12 +37,7 @@ const Order = () => {
     const handleCheckout = async (paymentMethod = 'card') => {
         if (!items || items.length === 0) return;
         
-        const token = localStorage.getItem('token');
-        if (!token) {
-            toast.error('Please login to place an order.');
-            navigate('/login');
-            return;
-        }
+        // Guest or logged-in checkout enabled
 
         setLoading(true);
         setLoadingMethod(paymentMethod);

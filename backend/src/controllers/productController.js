@@ -125,19 +125,29 @@ const createCategory = async (req, res) => {
     }
 };
 
-// @desc    Update product discount percentage
-// @route   PUT /api/products/:id/discount
-// @access  Private (Staff/Admin)
 const updateProductDiscount = async (req, res) => {
-    const { discount_percentage } = req.body;
+    const { discount_percentage, item_type } = req.body;
     const { id } = req.params;
 
     try {
-        await pool.query(
-            'UPDATE products SET discount_percentage = ? WHERE id = ?',
-            [discount_percentage !== undefined ? discount_percentage : 0, id]
-        );
-        res.json({ message: 'Product discount updated successfully' });
+        const disc = discount_percentage !== undefined ? Number(discount_percentage) : 0;
+        
+        try { await pool.query('ALTER TABLE dishes ADD COLUMN IF NOT EXISTS discount_percentage decimal(5,2) DEFAULT 0.00'); } catch (e) {}
+        try { await pool.query('ALTER TABLE beverages ADD COLUMN IF NOT EXISTS discount_percentage decimal(5,2) DEFAULT 0.00'); } catch (e) {}
+
+        if (item_type === 'dish' || item_type === 'menu') {
+            await pool.query('UPDATE dishes SET discount_percentage = ? WHERE id = ?', [disc, id]);
+        } else if (item_type === 'beverage') {
+            await pool.query('UPDATE beverages SET discount_percentage = ? WHERE id = ?', [disc, id]);
+        } else if (item_type === 'product') {
+            await pool.query('UPDATE products SET discount_percentage = ? WHERE id = ?', [disc, id]);
+        } else {
+            await pool.query('UPDATE products SET discount_percentage = ? WHERE id = ?', [disc, id]);
+            await pool.query('UPDATE dishes SET discount_percentage = ? WHERE id = ?', [disc, id]);
+            await pool.query('UPDATE beverages SET discount_percentage = ? WHERE id = ?', [disc, id]);
+        }
+
+        res.json({ message: 'Discount updated successfully', id, discount_percentage: disc });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

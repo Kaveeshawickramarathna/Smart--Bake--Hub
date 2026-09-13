@@ -66,7 +66,6 @@ const AdminLayout = () => {
         { name: 'Beverages', href: '/admin/beverages', icon: Coffee },
         { name: 'Catering Packages', href: '/admin/catering-packages', icon: Package },
         { name: 'Inventory', href: '/admin/inventory', icon: Box },
-        { name: 'QR Codes', href: '/admin/qrcodes', icon: QrCode },
         { name: 'Users', href: '/admin/users', icon: Users, adminOnly: true },
         { name: 'Events & Booking', href: '/admin/events', icon: Calendar },
         { name: 'Premium Add-Ons', href: '/admin/premium-addons', icon: Sparkles },

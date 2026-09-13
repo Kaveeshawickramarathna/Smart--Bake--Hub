@@ -20,6 +20,10 @@ const getBeverages = async (req, res) => {
             queryParams.push(category);
         }
 
+        if (req.query.discounted === 'true') {
+            query += ' AND m.discount_percentage > 0';
+        }
+
         query += ' GROUP BY m.id ORDER BY m.created_at DESC';
 
         const [beverages] = await pool.query(query, queryParams);
