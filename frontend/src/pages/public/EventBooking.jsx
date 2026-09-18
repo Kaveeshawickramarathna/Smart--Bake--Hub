@@ -11,7 +11,9 @@ import {
     ChevronRight, ArrowLeft, Send, Sparkles, AlertCircle, X, Image as ImageIcon
 } from 'lucide-react';
 
-const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
+const BASE_URL = import.meta.env.PROD 
+    ? '' 
+    : (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000');
 
 const EventBooking = () => {
     const { user } = useAuthStore();

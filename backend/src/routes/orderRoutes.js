@@ -3,7 +3,7 @@ const router = express.Router();
 const { placeOrder, getAllOrders, getMyOrders, updateOrderStatus } = require('../controllers/orderController');
 const { protect, optionalAuth, admin, staff } = require('../middleware/authMiddleware');
 
-router.post('/', optionalAuth, placeOrder);
+router.post('/', protect, placeOrder);
 router.get('/', protect, staff, getAllOrders);
 router.get('/my-orders', protect, getMyOrders);
 router.patch('/:id/status', protect, staff, updateOrderStatus);

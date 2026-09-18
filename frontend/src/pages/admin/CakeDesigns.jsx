@@ -3,7 +3,9 @@ import { Eye, EyeOff, Plus, X, Upload, Trash2, Image as ImageIcon } from 'lucide
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
-const BASE_URL = import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000';
+const BASE_URL = import.meta.env.PROD 
+    ? '' 
+    : (import.meta.env.VITE_API_URL ? import.meta.env.VITE_API_URL.replace('/api', '') : 'http://localhost:5000');
 
 const CakeDesigns = () => {
 

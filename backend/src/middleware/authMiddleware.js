@@ -55,16 +55,8 @@ const optionalAuth = async (req, res, next) => {
         }
     }
     
-    try {
-        const [guests] = await pool.query('SELECT * FROM users WHERE role = "customer" ORDER BY id ASC LIMIT 1');
-        if (guests.length > 0) {
-            req.user = guests[0];
-        } else {
-            req.user = { id: 1, name: 'Guest Customer', role: 'customer' };
-        }
-    } catch (e) {
-        req.user = { id: 1, name: 'Guest Customer', role: 'customer' };
-    }
+    // Fallback to guest identity
+    req.user = { id: null, name: 'Guest Customer', role: 'customer' };
     next();
 };
 

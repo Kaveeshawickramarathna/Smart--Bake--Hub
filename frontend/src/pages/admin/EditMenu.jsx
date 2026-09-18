@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { ArrowLeft, X, Image as ImageIcon } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
 import { mockMenuCategories } from '../../data/mockMenus';
 import CreatableSelect from 'react-select/creatable';
 
-const AddMenu = ({ onBack }) => {
+const EditMenu = ({ onBack }) => {
     const navigate = useNavigate();
+    const { id } = useParams();
 
     const handleBack = () => {
         if (onBack) onBack();
         else navigate('/admin/menus');
     };
-    const [loading, setLoading] = useState(false);
+
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
     const [categoriesList, setCategoriesList] = useState([]);
     const [preview, setPreview] = useState(null);
     const [formData, setFormData] = useState({
@@ -25,6 +28,9 @@ const AddMenu = ({ onBack }) => {
         price: '',
         price_small: '',
         price_large: '',
+        discount_percentage: 0,
+        status: 'active',
+        is_available: 1,
         image: null
     });
 
@@ -32,19 +38,44 @@ const AddMenu = ({ onBack }) => {
 
     useEffect(() => {
         const load = async () => {
+            setLoading(true);
             try {
-                const [catRes, codeRes] = await Promise.all([
+                const [catRes, menuRes] = await Promise.all([
                     api.get('/menus/categories').catch(() => ({ data: mockMenuCategories })),
-                    api.get('/menus/next-code').catch(() => ({ data: { nextCode: 'WBD0001' } }))
+                    api.get(`/menus/${id}`)
                 ]);
-                setCategoriesList(catRes.data || mockMenuCategories);
-                setFormData(prev => ({ ...prev, dish_code: codeRes.data.nextCode || 'WBD0001' }));
+
+                const fetchedCats = catRes.data || mockMenuCategories;
+                setCategoriesList(fetchedCats);
+
+                const menu = menuRes.data;
+                setFormData({
+                    dish_code: menu.dish_code || '',
+                    name: menu.name || '',
+                    menu_category: menu.menu_category || '',
+                    category: menu.category_id || '',
+                    portion_type: menu.portion_type || 'regular',
+                    price: menu.price || '',
+                    price_small: menu.price_small || '',
+                    price_large: menu.price_large || '',
+                    discount_percentage: menu.discount_percentage || 0,
+                    status: menu.status || 'active',
+                    is_available: menu.is_available ?? 1,
+                    image: null
+                });
+                if (menu.image_url) {
+                    setPreview(menu.image_url);
+                }
             } catch (err) {
-                setCategoriesList(mockMenuCategories);
+                console.error('Failed to load dish details:', err);
+                toast.error('Failed to load dish details');
+                navigate('/admin/menus');
+            } finally {
+                setLoading(false);
             }
         };
         load();
-    }, []);
+    }, [id, navigate]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -72,7 +103,7 @@ const AddMenu = ({ onBack }) => {
             toast.error('Description is required');
             return;
         }
-        setLoading(true);
+        setSubmitting(true);
         try {
             const res = await api.post('/menus/categories', pendingCategory);
             const newCat = { id: res.data.id, name: res.data.name };
@@ -83,7 +114,7 @@ const AddMenu = ({ onBack }) => {
         } catch (err) {
             toast.error(err?.response?.data?.message || 'Failed to add category');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
@@ -92,10 +123,7 @@ const AddMenu = ({ onBack }) => {
         label: cat.name
     }));
 
-
-
     const validateForm = () => {
-        if (!formData.dish_code.trim()) { toast.error('Dish code is required'); return false; }
         if (!formData.name.trim()) { toast.error('Dish name is required'); return false; }
         if (!formData.menu_category) { toast.error('Menu category is required'); return false; }
         if (!formData.category) { toast.error('Category is required'); return false; }
@@ -113,7 +141,7 @@ const AddMenu = ({ onBack }) => {
         e.preventDefault();
         if (!validateForm()) return;
 
-        setLoading(true);
+        setSubmitting(true);
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('dish_code', formData.dish_code);
@@ -124,21 +152,33 @@ const AddMenu = ({ onBack }) => {
             formDataToSend.append('price', formData.portion_type === 'regular' ? (parseFloat(formData.price) || 0) : 0);
             formDataToSend.append('price_small', formData.portion_type === 'varied' ? (parseFloat(formData.price_small) || 0) : 0);
             formDataToSend.append('price_large', formData.portion_type === 'varied' ? (parseFloat(formData.price_large) || 0) : 0);
+            formDataToSend.append('discount_percentage', parseFloat(formData.discount_percentage) || 0);
+            formDataToSend.append('status', formData.status);
+            formDataToSend.append('is_available', formData.is_available ? 1 : 0);
+
             if (formData.image) {
                 formDataToSend.append('image', formData.image);
             }
 
-            await api.post('/menus', formDataToSend, {
+            await api.put(`/menus/${id}`, formDataToSend, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success('Dish added successfully');
+            toast.success('Dish updated successfully');
             handleBack();
         } catch (err) {
-            toast.error(err?.response?.data?.message || 'Failed to create dish');
+            toast.error(err?.response?.data?.message || 'Failed to update dish');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center p-12 text-[#2E1A12]/60 font-medium">
+                Loading dish details...
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -147,8 +187,8 @@ const AddMenu = ({ onBack }) => {
                     <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div>
-                    <h1 className="text-3xl font-bold">Create New Dish</h1>
-                    <p className="text-sm mt-1">Add details for the new dish</p>
+                    <h1 className="text-3xl font-bold">Edit Dish</h1>
+                    <p className="text-sm mt-1">Modify dish details, pricing, and image</p>
                 </div>
             </div>
 
@@ -158,13 +198,13 @@ const AddMenu = ({ onBack }) => {
                     <div className="lg:col-span-2 space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-white rounded-xl border p-6">
-                                <label className="block text-sm font-semibold mb-2">Dish Code <span className="text-red-500">*</span></label>
-                                <input name="dish_code" value={formData.dish_code} readOnly className="w-full px-4 py-2.5 border rounded-lg bg-gray-100 cursor-not-allowed text-gray-500" />
+                                <label className="block text-sm font-semibold mb-2">Dish Code</label>
+                                <input name="dish_code" value={formData.dish_code} readOnly className="w-full px-4 py-2.5 border rounded-lg bg-gray-100 cursor-not-allowed text-gray-500 font-mono" />
                             </div>
 
                             <div className="bg-white rounded-xl border p-6">
                                 <label className="block text-sm font-semibold mb-2">Dish Name <span className="text-red-500">*</span></label>
-                                <input name="name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg" />
+                                <input name="name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
                             </div>
                         </div>
 
@@ -173,7 +213,7 @@ const AddMenu = ({ onBack }) => {
                                 <label className="block text-sm font-semibold mb-2">Category <span className="text-red-500">*</span></label>
                                 <CreatableSelect
                                     isClearable
-                                    isLoading={loading}
+                                    isLoading={submitting}
                                     options={categoryOptions}
                                     value={categoryOptions.find(c => c.value === formData.category) || null}
                                     onChange={(selected) => setFormData(prev => ({ ...prev, category: selected ? selected.value : '' }))}
@@ -222,19 +262,21 @@ const AddMenu = ({ onBack }) => {
                             </div>
 
                             <div className="bg-white rounded-xl border p-6">
-                                <label className="block text-sm font-semibold mb-2">Menu Category <span className="text-red-500">*</span></label>
-                                <select name="menu_category" value={formData.menu_category} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg">
-                                    <option value="">Select Menu Category</option>
-                                    <option value="A La Carte">A La Carte</option>
-                                    <option value="Set Menu">Set Menu</option>
-                                    <option value="Buffet">Buffet</option>
-                                    <option value="Special">Special</option>
+                                <label className="block text-sm font-semibold mb-2">Menu Group / Type <span className="text-red-500">*</span></label>
+                                <select name="menu_category" value={formData.menu_category} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]">
+                                    <option value="">Select Group</option>
+                                    <option value="Main Course">Main Course</option>
+                                    <option value="Appetizer">Appetizer</option>
+                                    <option value="Dessert">Dessert</option>
+                                    <option value="Side Dish">Side Dish</option>
+                                    <option value="Bakery">Bakery</option>
                                 </select>
                             </div>
                         </div>
 
+                        {/* Pricing Configuration */}
                         <div className="bg-white rounded-xl border p-6">
-                            <label className="block text-sm font-semibold mb-4">Pricing Options</label>
+                            <label className="block text-sm font-semibold mb-4">Portion & Pricing Type</label>
                             
                             <div className="flex gap-4 mb-4">
                                 <label className="flex items-center gap-2 cursor-pointer">
@@ -246,7 +288,7 @@ const AddMenu = ({ onBack }) => {
                                         onChange={handleInputChange} 
                                         className="text-[#C8843B]" 
                                     />
-                                    <span className="text-sm font-medium">Regular Price</span>
+                                    <span className="text-sm font-medium">Regular Single Price</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer">
                                     <input 
@@ -263,76 +305,74 @@ const AddMenu = ({ onBack }) => {
 
                             {formData.portion_type === 'regular' ? (
                                 <div>
-                                    <label className="block text-xs font-semibold mb-2 text-gray-500">Regular Price (Rs.) <span className="text-red-500">*</span></label>
-                                    <input name="price" type="number" step="0.01" min="0" value={formData.price} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
+                                    <label className="block text-sm font-semibold mb-2">Price (Rs.) <span className="text-red-500">*</span></label>
+                                    <input type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange} placeholder="0.00" className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
                                 </div>
                             ) : (
                                 <div className="grid grid-cols-2 gap-4">
                                     <div>
-                                        <label className="block text-xs font-semibold mb-2 text-gray-500">Small Portion Price (Rs.) <span className="text-red-500">*</span></label>
-                                        <input name="price_small" type="number" step="0.01" min="0" value={formData.price_small} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
+                                        <label className="block text-sm font-semibold mb-2">Small Price (Rs.) <span className="text-red-500">*</span></label>
+                                        <input type="number" step="0.01" name="price_small" value={formData.price_small} onChange={handleInputChange} placeholder="0.00" className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
                                     </div>
                                     <div>
-                                        <label className="block text-xs font-semibold mb-2 text-gray-500">Large Portion Price (Rs.) <span className="text-red-500">*</span></label>
-                                        <input name="price_large" type="number" step="0.01" min="0" value={formData.price_large} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
+                                        <label className="block text-sm font-semibold mb-2">Large Price (Rs.) <span className="text-red-500">*</span></label>
+                                        <input type="number" step="0.01" name="price_large" value={formData.price_large} onChange={handleInputChange} placeholder="0.00" className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
                                     </div>
                                 </div>
                             )}
-                        </div>
 
-                        <div className="flex gap-3 pt-4">
-                            <button type="button" onClick={() => navigate('/admin/menus')} className="flex-1 px-4 py-2.5 border rounded-lg">Cancel</button>
-                            <button type="submit" disabled={loading} className="flex-1 px-4 py-2.5 bg-[#2E1A12] text-white rounded-lg">{loading ? 'Creating...' : 'Create Dish'}</button>
+                            <div className="mt-4">
+                                <label className="block text-sm font-semibold mb-2">Discount Percentage (%)</label>
+                                <input type="number" min="0" max="100" name="discount_percentage" value={formData.discount_percentage} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Right Column: Image Upload Section */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-xl border border-[#C8843B]/20 p-6 sticky top-20">
-                            <label className="block text-sm font-semibold text-[#2E1A12] mb-4">
-                                Dish Image
-                            </label>
+                    {/* Right Column: Image & Actions */}
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-xl border p-6 text-center">
+                            <label className="block text-sm font-semibold mb-4 text-left">Dish Image</label>
                             
-                            <div className="mb-4">
-                                {preview ? (
-                                    <div className="w-full aspect-square rounded-lg overflow-hidden bg-[#F7F4ED] border border-[#C8843B]/20 relative group">
-                                        <img
-                                            src={preview}
-                                            alt="Preview"
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => { setPreview(null); setFormData(prev => ({ ...prev, image: null })); }}
-                                            className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors shadow-md"
-                                            title="Remove Image"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="w-full aspect-square rounded-lg bg-[#F7F4ED] border-2 border-dashed border-[#C8843B]/30 flex flex-col items-center justify-center p-4 text-center">
-                                        <ImageIcon className="w-12 h-12 text-[#C8843B]/50 mb-2" />
-                                        <span className="text-xs text-gray-500 font-medium">No image selected</span>
-                                    </div>
-                                )}
-                            </div>
+                            {preview ? (
+                                <div className="relative rounded-xl overflow-hidden border border-gray-200 mb-4 h-52 bg-gray-50 flex items-center justify-center">
+                                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setFormData(prev => ({ ...prev, image: null })); setPreview(null); }}
+                                        className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full hover:bg-red-700 shadow"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 mb-4 flex flex-col items-center justify-center text-gray-500 bg-gray-50/50">
+                                    <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
+                                    <span className="text-sm">Upload appetizing photo</span>
+                                    <span className="text-xs text-gray-400 mt-1">JPG, PNG, WebP up to 5MB</span>
+                                </div>
+                            )}
 
-                            <label className="block">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                />
-                                <span className="block w-full px-4 py-2.5 bg-[#C8843B]/10 text-[#C8843B] text-sm font-medium text-center rounded-lg cursor-pointer hover:bg-[#C8843B]/20 transition-colors">
-                                    {preview ? 'Change Image' : 'Choose Dish Image'}
-                                </span>
+                            <label className="inline-block px-4 py-2 border border-[#C8843B] text-[#C8843B] rounded-lg cursor-pointer hover:bg-[#C8843B]/10 transition-colors font-medium text-sm">
+                                Choose New Image
+                                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                             </label>
+                        </div>
 
-                            <p className="text-xs text-[#2E1A12]/60 mt-3">
-                                Recommended: 600x400px or square, JPG or PNG format.
-                            </p>
+                        <div className="bg-white rounded-xl border p-6 space-y-4">
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className="w-full py-3 bg-[#C8843B] text-white rounded-xl font-bold shadow hover:bg-[#A66D31] transition-all disabled:opacity-50"
+                            >
+                                {submitting ? 'Saving Changes...' : 'Save Changes'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleBack}
+                                className="w-full py-3 border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -341,4 +381,4 @@ const AddMenu = ({ onBack }) => {
     );
 };
 
-export default AddMenu;
+export default EditMenu;

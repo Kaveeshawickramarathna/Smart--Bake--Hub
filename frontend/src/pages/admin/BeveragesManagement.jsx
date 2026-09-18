@@ -182,6 +182,18 @@ const BeveragesManagement = ({ onNavigateToAdd }) => {
                             key={beverage.id}
                             className="bg-white rounded-2xl border border-[#C8843B]/20 overflow-hidden hover:shadow-lg transition-shadow flex flex-col justify-between"
                         >
+                            {/* Beverage Image Banner if uploaded */}
+                            {beverage.image_url && (
+                                <div className="h-44 w-full overflow-hidden bg-gray-100 relative">
+                                    <img 
+                                        src={beverage.image_url} 
+                                        alt={beverage.name} 
+                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
+                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
+                                </div>
+                            )}
+
                             {/* Header */}
                             <div className="bg-gradient-to-r from-[#2E1A12] to-[#C8843B] p-5 text-white flex justify-between items-start gap-4">
                                 <div className="flex-1">
@@ -190,13 +202,22 @@ const BeveragesManagement = ({ onNavigateToAdd }) => {
                                 </div>
                                 <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
                                     <p className="font-bold text-sm">{beverage.beverage_category_name || 'N/A'}</p>
-                                    <button
-                                        onClick={() => setDeletingBeverage(beverage)}
-                                        className="p-1.5 bg-red-500/20 hover:bg-red-500/40 text-white rounded-lg transition-all"
-                                        title="Delete Beverage"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <button
+                                            onClick={() => navigate(`/admin/beverages/edit/${beverage.id}`)}
+                                            className="p-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all"
+                                            title="Edit Beverage"
+                                        >
+                                            <Edit2 className="w-4 h-4" />
+                                        </button>
+                                        <button
+                                            onClick={() => setDeletingBeverage(beverage)}
+                                            className="p-1.5 bg-red-500/30 hover:bg-red-500/50 text-white rounded-lg transition-all"
+                                            title="Delete Beverage"
+                                        >
+                                            <Trash2 className="w-4 h-4" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 

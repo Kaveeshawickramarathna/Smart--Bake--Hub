@@ -12,6 +12,7 @@ export const useAuthStore = create((set) => ({
         localStorage.removeItem('user');
         localStorage.removeItem('token');
         localStorage.removeItem('recentOrder');
+        localStorage.removeItem('cart');
         set({ user: null, token: null });
         window.location.href = '/';
     }

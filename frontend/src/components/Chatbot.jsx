@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { MessageSquare, X, Send, Bot, User, UserCog } from 'lucide-react';
+import { MessageSquare, X, Send, Bot, UserCog, Loader2 } from 'lucide-react';
 import api from '../services/api';
 import { useAuthStore } from '../store/authStore';
 
@@ -10,10 +10,9 @@ const Chatbot = () => {
     const [messages, setMessages] = useState([]);
     const [input, setInput] = useState('');
     const [status, setStatus] = useState('bot'); // 'bot', 'admin_requested', 'admin_active', 'closed'
+    const [isTyping, setIsTyping] = useState(false);
     const messagesEndRef = useRef(null);
 
-    // Don't show chatbot for admin and staff
-    if (user && (user.role === 'admin' || user.role === 'staff')) return null;
 
     const initChat = async () => {
         let sid = localStorage.getItem('chat_session_id');
@@ -73,28 +72,40 @@ const Chatbot = () => {
         
         // Optimistic update
         setMessages(prev => [...prev, { sender: 'customer', message: msg, created_at: new Date() }]);
+        scrollToBottom();
 
         try {
             await api.post(`/chat/${sessionId}/send`, { message: msg });
             
-            // If in bot mode and customer asks a question, give a generic bot reply, unless they use keywords
+            // If in bot mode, trigger intelligent AI assistant reply powered by gpt-5.6-luna
             if (status === 'bot') {
+                setIsTyping(true);
                 const lowerMsg = msg.toLowerCase();
                 let keyword = null;
                 if (lowerMsg.includes('hour') || lowerMsg.includes('open') || lowerMsg.includes('time')) keyword = 'hours';
-                else if (lowerMsg.includes('menu') || lowerMsg.includes('food')) keyword = 'menu';
-                else if (lowerMsg.includes('deliver') || lowerMsg.includes('location')) keyword = 'delivery';
-                else if (lowerMsg.includes('contact') || lowerMsg.includes('phone') || lowerMsg.includes('number')) keyword = 'contact';
+                else if (lowerMsg.includes('deliver') || lowerMsg.includes('takeaway')) keyword = 'delivery';
 
-                if (keyword) {
-                    await api.post(`/chat/${sessionId}/bot-reply`, { keyword });
-                } else {
-                    await api.post(`/chat/${sessionId}/bot-reply`, { keyword: 'unknown' });
+                try {
+                    await api.post(`/chat/${sessionId}/bot-reply`, { message: msg, keyword });
+                } finally {
+                    setIsTyping(false);
                 }
             }
             fetchMessages();
         } catch (error) {
             console.error('Failed to send message', error);
+            setIsTyping(false);
+        }
+    };
+
+    const handleQuickReply = async (keyword) => {
+        if (!sessionId) return;
+        setIsTyping(true);
+        try {
+            await api.post(`/chat/${sessionId}/bot-reply`, { keyword });
+            await fetchMessages();
+        } finally {
+            setIsTyping(false);
         }
     };
 
@@ -106,6 +117,11 @@ const Chatbot = () => {
             console.error('Failed to request admin', error);
         }
     };
+
+    // Don't render chatbot widget for admin or staff
+    if (user && (user.role === 'admin' || user.role === 'staff')) {
+        return null;
+    }
 
     return (
         <div className="fixed bottom-6 right-6 z-50 flex flex-col items-end">
@@ -119,9 +135,9 @@ const Chatbot = () => {
                                 <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 border-2 border-[#2E1A12] rounded-full"></span>
                             </div>
                             <div>
-                                <h3 className="font-bold text-sm">{status === 'admin_active' ? 'Live Support' : 'Smart Bake Assistant'}</h3>
+                                <h3 className="font-bold text-sm">{status === 'admin_active' ? 'Live Support' : 'Smart Bake AI Assistant'}</h3>
                                 <p className="text-[10px] text-white/70">
-                                    {status === 'bot' ? 'Automated Replies' : status === 'admin_requested' ? 'Waiting for Admin...' : 'Admin is typing...'}
+                                    {status === 'bot' ? (isTyping ? 'AI is thinking...' : 'GPT-5.6 Assistant Online') : status === 'admin_requested' ? 'Waiting for Admin...' : 'Admin is connected'}
                                 </p>
                             </div>
                         </div>
@@ -141,21 +157,29 @@ const Chatbot = () => {
                                             ? 'bg-blue-600 text-white rounded-tl-sm'
                                             : 'bg-white text-[#2E1A12] shadow-sm rounded-tl-sm border border-gray-100'
                                 }`}>
-                                    <p>{msg.message}</p>
+                                    <p className="whitespace-pre-wrap leading-relaxed">{msg.message}</p>
                                     <span className={`text-[9px] mt-1 block ${msg.sender === 'customer' ? 'text-white/70' : 'text-gray-400'}`}>
                                         {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                                     </span>
                                 </div>
                             </div>
                         ))}
+                        {isTyping && (
+                            <div className="flex justify-start">
+                                <div className="bg-white text-[#2E1A12] shadow-sm rounded-2xl rounded-tl-sm px-4 py-2 border border-gray-100 flex items-center gap-2 text-xs text-gray-500">
+                                    <Loader2 size={13} className="animate-spin text-[#C8843B]" />
+                                    <span>AI Assistant is typing...</span>
+                                </div>
+                            </div>
+                        )}
                         <div ref={messagesEndRef} />
                     </div>
 
                     {/* Quick Actions (Bot Mode) */}
                     {status === 'bot' && (
                         <div className="bg-white p-2 border-t border-gray-100 flex gap-2 overflow-x-auto whitespace-nowrap hide-scrollbar">
-                            <button onClick={() => api.post(`/chat/${sessionId}/bot-reply`, { keyword: 'hours' }).then(() => fetchMessages())} className="px-3 py-1.5 bg-[#C8843B]/10 text-[#C8843B] text-xs font-semibold rounded-full hover:bg-[#C8843B]/20 transition-colors">Opening Hours</button>
-                            <button onClick={() => api.post(`/chat/${sessionId}/bot-reply`, { keyword: 'delivery' }).then(() => fetchMessages())} className="px-3 py-1.5 bg-[#C8843B]/10 text-[#C8843B] text-xs font-semibold rounded-full hover:bg-[#C8843B]/20 transition-colors">Delivery Info</button>
+                            <button onClick={() => handleQuickReply('hours')} className="px-3 py-1.5 bg-[#C8843B]/10 text-[#C8843B] text-xs font-semibold rounded-full hover:bg-[#C8843B]/20 transition-colors">Opening Hours</button>
+                            <button onClick={() => handleQuickReply('delivery')} className="px-3 py-1.5 bg-[#C8843B]/10 text-[#C8843B] text-xs font-semibold rounded-full hover:bg-[#C8843B]/20 transition-colors">Delivery Info</button>
                             <button onClick={requestAdmin} className="px-3 py-1.5 bg-gray-100 text-gray-600 text-xs font-semibold rounded-full hover:bg-gray-200 transition-colors">Talk to Admin</button>
                         </div>
                     )}
@@ -166,7 +190,7 @@ const Chatbot = () => {
                             type="text"
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
-                            placeholder="Type your message..."
+                            placeholder="Ask about cakes, menu, events, or orders..."
                             disabled={status === 'closed'}
                             className="flex-1 bg-[#F7F4ED] border border-transparent focus:border-[#C8843B]/30 rounded-full px-4 py-2 text-sm focus:outline-none transition-all disabled:opacity-50"
                         />

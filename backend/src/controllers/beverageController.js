@@ -60,17 +60,26 @@ const getBeverageById = async (req, res) => {
 // @desc    Create a beverage
 const createBeverage = async (req, res) => {
     const { name, beverage_code, beverage_category_id, portion_type, price, price_small, price_large, price_variants, status = 'active', productItems = [] } = req.body;
+    let image_url = req.body.image_url || null;
+    if (req.file) {
+        image_url = `/uploads/${req.file.filename}`;
+    }
 
     try {
+        let variantsStr = null;
+        if (price_variants) {
+            variantsStr = typeof price_variants === 'string' ? price_variants : JSON.stringify(price_variants);
+        }
+
         // Insert beverage
         const [result] = await pool.query(
-            'INSERT INTO beverages (beverage_category_id, beverage_code, name, portion_type, price, price_small, price_large, price_variants, status, discount_percentage) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [beverage_category_id || null, beverage_code, name, portion_type || 'regular', price || 0, price_small || 0, price_large || 0, price_variants ? JSON.stringify(price_variants) : null, status, discount_percentage]
+            'INSERT INTO beverages (beverage_category_id, beverage_code, name, portion_type, price, price_small, price_large, price_variants, status, discount_percentage, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [beverage_category_id || null, beverage_code, name, portion_type || 'regular', price || 0, price_small || 0, price_large || 0, variantsStr, status, req.body.discount_percentage || 0, image_url]
         );
 
         const beverageId = result.insertId;
 
-        res.status(201).json({ id: beverageId, message: 'Beverage created successfully' });
+        res.status(201).json({ id: beverageId, message: 'Beverage created successfully', image_url });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -81,14 +90,31 @@ const updateBeverage = async (req, res) => {
     const { name, beverage_code, beverage_category_id, portion_type, price, price_small, price_large, price_variants, status, discount_percentage, productItems = [] } = req.body;
     const { id } = req.params;
 
-    try {
-        // Update beverage
-        await pool.query(
-            'UPDATE beverages SET name=?, beverage_code=?, beverage_category_id=?, portion_type=?, price=?, price_small=?, price_large=?, price_variants=?, status=?, discount_percentage=? WHERE id=?',
-            [name, beverage_code, beverage_category_id || null, portion_type || 'regular', price || 0, price_small || 0, price_large || 0, price_variants ? JSON.stringify(price_variants) : null, status || 'active', discount_percentage || 0, id]
-        );
+    let image_url = req.body.image_url;
+    if (req.file) {
+        image_url = `/uploads/${req.file.filename}`;
+    }
 
-        res.json({ message: 'Beverage updated successfully' });
+    try {
+        let variantsStr = null;
+        if (price_variants) {
+            variantsStr = typeof price_variants === 'string' ? price_variants : JSON.stringify(price_variants);
+        }
+
+        let query = 'UPDATE beverages SET name=?, beverage_code=?, beverage_category_id=?, portion_type=?, price=?, price_small=?, price_large=?, price_variants=?, status=?, discount_percentage=?';
+        let params = [name, beverage_code, beverage_category_id || null, portion_type || 'regular', price || 0, price_small || 0, price_large || 0, variantsStr, status || 'active', discount_percentage || 0];
+
+        if (image_url !== undefined) {
+            query += ', image_url=?';
+            params.push(image_url);
+        }
+
+        query += ' WHERE id=?';
+        params.push(id);
+
+        await pool.query(query, params);
+
+        res.json({ message: 'Beverage updated successfully', image_url });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -142,10 +142,14 @@ const updateProductDiscount = async (req, res) => {
         } else if (item_type === 'product') {
             await pool.query('UPDATE products SET discount_percentage = ? WHERE id = ?', [disc, id]);
         } else {
-            await pool.query('UPDATE products SET discount_percentage = ? WHERE id = ?', [disc, id]);
-            await pool.query('UPDATE dishes SET discount_percentage = ? WHERE id = ?', [disc, id]);
-            await pool.query('UPDATE beverages SET discount_percentage = ? WHERE id = ?', [disc, id]);
+            return res.status(400).json({ message: 'item_type is required (product, dish, or beverage)' });
         }
+
+        // Invalidate waste cache so new discount immediately reflects
+        try {
+            const { invalidateWasteCache } = require('./aiController');
+            if (invalidateWasteCache) invalidateWasteCache();
+        } catch (e) {}
 
         res.json({ message: 'Discount updated successfully', id, discount_percentage: disc });
     } catch (error) {

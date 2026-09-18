@@ -26,18 +26,20 @@ import NotFound from './pages/public/NotFound';
 // Admin Pages
 import AdminLogin from './pages/auth/AdminLogin';
 import AdminLayout from './pages/admin/AdminLayout';
-import Dashboard from './pages/admin/Dashboard';
 import Orders from './pages/admin/Orders';
 import Users from './pages/admin/Users';
 import Products from './pages/admin/Products';
-import WasteReduction from './pages/admin/WasteReduction';
+import DemandForecasting from './pages/admin/DemandForecasting';
+import FoodWasteReduction from './pages/admin/FoodWasteReduction';
 import Reports from './pages/admin/Reports';
 import ProductMenuManagement from './pages/admin/ProductMenuManagement';
 import AddProduct from './pages/admin/AddProduct';
 import EditProduct from './pages/admin/EditProduct';
 import AddMenu from './pages/admin/AddMenu';
+import EditMenu from './pages/admin/EditMenu';
 import BeveragesManagement from './pages/admin/BeveragesManagement';
 import AddBeverage from './pages/admin/AddBeverage';
+import EditBeverage from './pages/admin/EditBeverage';
 import CateringPackages from './pages/admin/CateringPackages';
 import AddCateringPackage from './pages/admin/AddCateringPackage';
 import PremiumAddons from './pages/admin/PremiumAddons';
@@ -137,21 +139,25 @@ function App() {
                         <AdminLayout />
                     </PrivateRoute>
                 }>
-                    <Route index element={<Dashboard />} />
+                    <Route index element={<DemandForecasting />} />
                     <Route path="orders" element={<Orders />} />
                     <Route path="users" element={<PrivateRoute roles={['admin']}><Users /></PrivateRoute>} />
-                    <Route path="products" element={<Navigate to="/admin/menus" replace />} />
+                    <Route path="products" element={<Products />} />
                     <Route path="products/add" element={<AddProduct />} />
                     <Route path="products/edit/:id" element={<EditProduct />} />
                     <Route path="menus" element={<ProductMenuManagement />} />
                     <Route path="menus/add" element={<AddMenu />} />
+                    <Route path="menus/edit/:id" element={<EditMenu />} />
                     <Route path="beverages" element={<BeveragesManagement />} />
                     <Route path="beverages/add" element={<AddBeverage />} />
+                    <Route path="beverages/edit/:id" element={<EditBeverage />} />
                     <Route path="catering-packages" element={<CateringPackages />} />
                     <Route path="catering-packages/add" element={<AddCateringPackage />} />
                     <Route path="premium-addons" element={<PremiumAddons />} />
                     <Route path="cake-designs" element={<CakeDesigns />} />
-                    <Route path="ai/waste" element={<WasteReduction />} />
+                    <Route path="demand-forecasting" element={<DemandForecasting />} />
+                    <Route path="food-waste-reduction" element={<FoodWasteReduction />} />
+                    <Route path="ai/waste" element={<Navigate to="/admin/food-waste-reduction" replace />} />
                     <Route path="events" element={<Events />} />
                     <Route path="events/add" element={<AddEvent />} />
                     <Route path="inventory" element={<InventoryManagement />} />
@@ -172,8 +178,8 @@ function App() {
                 {/* Catch-all 404 Route for Security by Obscurity */}
                 <Route path="*" element={<NotFound />} />
             </Routes>
-            </ErrorBoundary>
             <Chatbot />
+            </ErrorBoundary>
         </Router>
     );
 }

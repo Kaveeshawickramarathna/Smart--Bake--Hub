@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
-import { ShoppingCart, Menu as MenuIcon, X } from 'lucide-react';
+import { ShoppingCart, Menu as MenuIcon, X, Shield, LayoutDashboard } from 'lucide-react';
 import LogoutConfirmation from './LogoutConfirmation';
 
 const Header = () => {
@@ -68,7 +68,7 @@ const Header = () => {
                 </nav>
 
                 {/* Right Actions */}
-                <div className="flex items-center gap-8">
+                <div className="flex items-center gap-6">
                     {/* Cart */}
                     <Link to="/order" className="relative cursor-pointer text-[#2E1A12] hover:text-[#C8843B] transition-colors">
                         <ShoppingCart className="w-6 h-6 stroke-[1.5]" />
@@ -81,7 +81,25 @@ const Header = () => {
 
                     {/* Auth Status - Desktop */}
                     {user ? (
-                        <div className="hidden md:flex items-center gap-4">
+                        <div className="hidden md:flex items-center gap-3">
+                            {user.role === 'admin' && (
+                                <Link 
+                                    to="/admin" 
+                                    className="bg-[#2E1A12] text-white hover:bg-[#C8843B] font-bold px-3.5 py-1.5 rounded-full text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+                                >
+                                    <Shield className="w-3.5 h-3.5 text-[#C8843B]" />
+                                    <span>Admin Panel</span>
+                                </Link>
+                            )}
+                            {user.role === 'staff' && (
+                                <Link 
+                                    to="/secure-staff-portal" 
+                                    className="bg-[#2E1A12] text-white hover:bg-[#C8843B] font-bold px-3.5 py-1.5 rounded-full text-xs transition-colors flex items-center gap-1.5 shadow-sm"
+                                >
+                                    <Shield className="w-3.5 h-3.5 text-[#C8843B]" />
+                                    <span>Staff Portal</span>
+                                </Link>
+                            )}
                             <Link to="/profile" className="text-sm font-semibold text-[#2E1A12] hover:text-[#C8843B] transition-colors">
                                 {user.name}
                             </Link>
@@ -121,6 +139,26 @@ const Header = () => {
                     <div className="pt-2 border-t border-gray-100 flex flex-col gap-3">
                         {user ? (
                             <>
+                                {user.role === 'admin' && (
+                                    <Link 
+                                        to="/admin" 
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="bg-[#2E1A12] text-white hover:bg-[#C8843B] font-bold px-4 py-2.5 rounded-full text-center text-xs transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                    >
+                                        <Shield className="w-3.5 h-3.5 text-[#C8843B]" />
+                                        <span>Go to Admin Panel</span>
+                                    </Link>
+                                )}
+                                {user.role === 'staff' && (
+                                    <Link 
+                                        to="/secure-staff-portal" 
+                                        onClick={() => setMobileMenuOpen(false)}
+                                        className="bg-[#2E1A12] text-white hover:bg-[#C8843B] font-bold px-4 py-2.5 rounded-full text-center text-xs transition-colors flex items-center justify-center gap-2 shadow-sm"
+                                    >
+                                        <Shield className="w-3.5 h-3.5 text-[#C8843B]" />
+                                        <span>Go to Staff Portal</span>
+                                    </Link>
+                                )}
                                 <Link to="/profile" onClick={() => setMobileMenuOpen(false)} className="text-sm font-semibold text-[#2E1A12]">
                                     {user.name}
                                 </Link>

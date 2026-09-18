@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, CheckCircle, Clock, XCircle, Search, Eye, Filter } from 'lucide-react';
+import { ShoppingCart, Search, Eye, Filter } from 'lucide-react';
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
@@ -7,16 +7,13 @@ const Orders = () => {
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
     const [filter, setFilter] = useState('All');
+    const [paymentFilter, setPaymentFilter] = useState('All');
     const [searchQuery, setSearchQuery] = useState('');
     const [expandedOrder, setExpandedOrder] = useState(null);
     const [prepModalOpen, setPrepModalOpen] = useState(false);
     const [prepOrder, setPrepOrder] = useState(null);
     const [prepTimeHours, setPrepTimeHours] = useState(0);
     const [prepTimeMinutes, setPrepTimeMinutes] = useState(30);
-
-    useEffect(() => {
-        fetchOrders();
-    }, []);
 
     const fetchOrders = async () => {
         try {
@@ -28,6 +25,38 @@ const Orders = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    useEffect(() => {
+        fetchOrders();
+    }, []);
+
+    const updatePaymentStatus = async (orderId, newStatus) => {
+        try {
+            await api.patch(`/orders/${orderId}/status`, { payment_status: newStatus });
+            toast.success(`Order #${orderId} marked as ${newStatus.toUpperCase()}`);
+            setOrders(orders.map(o => o.id === orderId ? { ...o, payment_status: newStatus } : o));
+        } catch (error) {
+            console.error('Failed to update payment status:', error);
+            toast.error('Failed to update payment status');
+        }
+    };
+
+    const updatePaymentMethod = async (orderId, newMethod) => {
+        try {
+            await api.patch(`/orders/${orderId}/status`, { payment_method: newMethod });
+            toast.success(`Order #${orderId} payment method set to ${newMethod.toUpperCase()}`);
+            setOrders(orders.map(o => o.id === orderId ? { ...o, payment_method: newMethod } : o));
+        } catch (error) {
+            console.error('Failed to update payment method:', error);
+            toast.error('Failed to update payment method');
+        }
+    };
+
+    const togglePaymentStatus = async (order) => {
+        const currentStatus = (order.payment_status || '').toLowerCase();
+        const nextStatus = currentStatus === 'paid' ? 'unpaid' : 'paid';
+        updatePaymentStatus(order.id, nextStatus);
     };
 
     const updateStatus = async (orderId, newStatus) => {
@@ -66,23 +95,35 @@ const Orders = () => {
 
     const filteredOrders = orders.filter(order => {
         const matchesFilter = filter === 'All' || order.status === filter.toLowerCase();
+        
+        let matchesPayment = true;
+        if (paymentFilter === 'Paid') {
+            matchesPayment = (order.payment_status || '').toLowerCase() === 'paid';
+        } else if (paymentFilter === 'Unpaid') {
+            matchesPayment = (order.payment_status || '').toLowerCase() !== 'paid';
+        } else if (paymentFilter === 'Cash') {
+            matchesPayment = (order.payment_method || 'cash').toLowerCase() === 'cash';
+        } else if (paymentFilter === 'Card') {
+            matchesPayment = (order.payment_method || '').toLowerCase() === 'card';
+        }
+
         const matchesSearch = 
             order.id.toString().includes(searchQuery) || 
             (order.customer_name || '').toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesFilter && matchesSearch;
+        return matchesFilter && matchesPayment && matchesSearch;
     });
 
     return (
         <div className="space-y-6">
-            <div className="flex justify-between items-center">
+            <div className="flex justify-between items-center flex-wrap gap-4">
                 <div>
                     <h1 className="text-2xl font-bold text-[#2E1A12] font-serif flex items-center gap-2">
                         <ShoppingCart className="w-6 h-6 text-[#C8843B]" /> Order Management
                     </h1>
-                    <p className="text-sm text-gray-500 mt-1">Manage and track all customer orders</p>
+                    <p className="text-sm text-gray-500 mt-1">Manage, verify payments, and track all customer orders</p>
                 </div>
                 
-                <div className="flex gap-4">
+                <div className="flex gap-3 flex-wrap">
                     <div className="relative">
                         <Search className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
                         <input
@@ -92,6 +133,19 @@ const Orders = () => {
                             onChange={(e) => setSearchQuery(e.target.value)}
                             className="pl-9 pr-4 py-2 bg-white border border-[#C8843B]/20 rounded-xl text-sm focus:outline-none focus:border-[#C8843B] transition-colors"
                         />
+                    </div>
+                    <div className="relative">
+                        <select
+                            value={paymentFilter}
+                            onChange={(e) => setPaymentFilter(e.target.value)}
+                            className="px-3 py-2 bg-white border border-[#C8843B]/20 rounded-xl text-sm font-medium focus:outline-none focus:border-[#C8843B]"
+                        >
+                            <option value="All">All Payments</option>
+                            <option value="Paid">✓ Paid Only</option>
+                            <option value="Unpaid">⏳ Unpaid Only</option>
+                            <option value="Cash">💵 Cash Orders</option>
+                            <option value="Card">💳 Card Orders</option>
+                        </select>
                     </div>
                     <div className="relative">
                         <Filter className="w-4 h-4 text-gray-400 absolute left-3 top-1/2 -translate-y-1/2" />
@@ -132,6 +186,7 @@ const Orders = () => {
                                     <th className="px-6 py-4 text-xs font-bold text-[#2E1A12] uppercase tracking-wider">Customer</th>
                                     <th className="px-6 py-4 text-xs font-bold text-[#2E1A12] uppercase tracking-wider">Type</th>
                                     <th className="px-6 py-4 text-xs font-bold text-[#2E1A12] uppercase tracking-wider">Amount</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-[#2E1A12] uppercase tracking-wider">Payment</th>
                                     <th className="px-6 py-4 text-xs font-bold text-[#2E1A12] uppercase tracking-wider">Status</th>
                                     <th className="px-6 py-4 text-xs font-bold text-[#2E1A12] uppercase tracking-wider">Actions</th>
                                 </tr>
@@ -165,6 +220,39 @@ const Orders = () => {
                                                 </div>
                                             </td>
                                             <td className="px-6 py-4 whitespace-nowrap">
+                                                <div className="flex flex-col gap-1.5 items-start">
+                                                    {/* Payment Method Selector */}
+                                                    <select
+                                                        value={(order.payment_method || 'cash').toLowerCase()}
+                                                        onChange={(e) => updatePaymentMethod(order.id, e.target.value)}
+                                                        className={`text-[11px] font-bold py-1 px-2.5 rounded-lg border focus:outline-none cursor-pointer transition-colors shadow-2xs ${
+                                                            (order.payment_method || '').toLowerCase() === 'card'
+                                                                ? 'bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100'
+                                                                : 'bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100'
+                                                        }`}
+                                                        title="Click to change payment method"
+                                                    >
+                                                        <option value="cash">💵 Cash</option>
+                                                        <option value="card">💳 Card</option>
+                                                    </select>
+
+                                                    {/* Payment Status Dropdown Selector */}
+                                                    <select
+                                                        value={(order.payment_status || 'unpaid').toLowerCase()}
+                                                        onChange={(e) => updatePaymentStatus(order.id, e.target.value)}
+                                                        className={`text-[10px] font-bold uppercase tracking-wider py-1 px-2.5 rounded-lg border focus:outline-none cursor-pointer transition-all shadow-2xs ${
+                                                            (order.payment_status || '').toLowerCase() === 'paid'
+                                                                ? 'bg-emerald-100 text-emerald-800 border-emerald-300 hover:bg-emerald-200'
+                                                                : 'bg-rose-50 text-rose-700 border-rose-300 hover:bg-rose-100'
+                                                        }`}
+                                                        title="Click to change payment status (Paid / Unpaid)"
+                                                    >
+                                                        <option value="unpaid">⏳ UNPAID</option>
+                                                        <option value="paid">✓ PAID</option>
+                                                    </select>
+                                                </div>
+                                            </td>
+                                            <td className="px-6 py-4 whitespace-nowrap">
                                                 <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider border ${getStatusColor(order.status)}`}>
                                                     {order.status}
                                                 </span>
@@ -193,8 +281,37 @@ const Orders = () => {
                                         </tr>
                                         {expandedOrder === order.id && (
                                             <tr className="bg-gray-50/50">
-                                                <td colSpan="6" className="px-6 py-4">
+                                                <td colSpan="7" className="px-6 py-4">
                                                     <div className="bg-white border border-gray-100 rounded-xl p-4 shadow-sm">
+                                                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                                                            <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center justify-between">
+                                                                <div>
+                                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Payment Details</span>
+                                                                    <span className="text-sm font-bold text-[#2E1A12] flex items-center gap-1.5 mt-0.5">
+                                                                        {(order.payment_method || '').toLowerCase() === 'card' ? '💳 Card (Stripe)' : '💵 Cash Payment'}
+                                                                    </span>
+                                                                </div>
+                                                                <button
+                                                                    onClick={() => togglePaymentStatus(order)}
+                                                                    className={`px-3 py-1 rounded-lg text-xs font-bold border transition-colors ${
+                                                                        (order.payment_status || '').toLowerCase() === 'paid'
+                                                                            ? 'bg-emerald-50 text-emerald-700 border-emerald-300'
+                                                                            : 'bg-amber-50 text-amber-700 border-amber-300 hover:bg-emerald-50 hover:text-emerald-700'
+                                                                    }`}
+                                                                >
+                                                                    {(order.payment_status || '').toLowerCase() === 'paid' ? '✓ Paid' : 'Mark as Paid'}
+                                                                </button>
+                                                            </div>
+                                                            <div className="bg-gray-50 border border-gray-100 rounded-xl p-3 flex items-center justify-between">
+                                                                <div>
+                                                                    <span className="text-[10px] font-bold text-gray-400 uppercase tracking-wider block">Order Type</span>
+                                                                    <span className="text-sm font-bold text-[#2E1A12] capitalize mt-0.5 block">
+                                                                        {order.order_type} {order.table_number ? `(Table ${order.table_number})` : ''}
+                                                                    </span>
+                                                                </div>
+                                                                <span className="text-xs text-gray-500 font-semibold">{order.items?.length || 0} items</span>
+                                                            </div>
+                                                        </div>
                                                         <h4 className="text-xs font-bold text-gray-500 uppercase tracking-wider mb-3">Order Items</h4>
                                                         <ul className="space-y-2">
                                                             {order.items?.map((item, idx) => (
