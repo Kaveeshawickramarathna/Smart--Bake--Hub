@@ -62,6 +62,8 @@ CREATE TABLE `beverages` (
   `status` varchar(20) DEFAULT 'active',
   `is_available` tinyint(1) DEFAULT '1',
   `price_variants` json DEFAULT NULL,
+  `discount_percentage` decimal(5,2) DEFAULT '0.00',
+  `image_url` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `fk_bev_cat` (`beverage_category_id`),
   CONSTRAINT `fk_bev_cat` FOREIGN KEY (`beverage_category_id`) REFERENCES `beverage_categories` (`id`) ON DELETE SET NULL
@@ -197,6 +199,8 @@ CREATE TABLE `dishes` (
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `status` varchar(20) DEFAULT 'active',
   `is_available` tinyint(1) DEFAULT '1',
+  `discount_percentage` decimal(5,2) DEFAULT '0.00',
+  `image_url` varchar(255) DEFAULT NULL,
   PRIMARY KEY (`id`),
   KEY `dishes_ibfk_1` (`category_id`),
   CONSTRAINT `dishes_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `dish_categories` (`id`) ON DELETE SET NULL

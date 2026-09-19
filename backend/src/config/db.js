@@ -28,6 +28,18 @@ const pool = {
     end: async () => internalPool.end()
 };
 
+const ensureColumnExists = async (connection, table, column, columnDef) => {
+    try {
+        const [cols] = await connection.query(`SHOW COLUMNS FROM \`${table}\` LIKE ?`, [column]);
+        if (cols.length === 0) {
+            await connection.query(`ALTER TABLE \`${table}\` ADD COLUMN \`${column}\` ${columnDef}`);
+            console.log(`Added missing column '${column}' to table '${table}'.`);
+        }
+    } catch (err) {
+        console.error(`Error ensuring column '${column}' on table '${table}':`, err.message);
+    }
+};
+
 const ready = (async () => {
     let retries = 5;
     while (retries > 0) {
@@ -35,12 +47,15 @@ const ready = (async () => {
             const connection = await internalPool.getConnection();
             console.log(`MySQL connection established on ${configBase.host}:${configBase.port} (DB: ${configBase.database}).`);
             
+            await ensureColumnExists(connection, 'dishes', 'image_url', 'varchar(255) DEFAULT NULL');
+            await ensureColumnExists(connection, 'dishes', 'discount_percentage', 'decimal(5,2) DEFAULT 0.00');
+            await ensureColumnExists(connection, 'beverages', 'image_url', 'varchar(255) DEFAULT NULL');
+            await ensureColumnExists(connection, 'beverages', 'discount_percentage', 'decimal(5,2) DEFAULT 0.00');
+            
             try {
-                await connection.query('ALTER TABLE dishes ADD COLUMN IF NOT EXISTS image_url varchar(255) DEFAULT NULL');
-                await connection.query('ALTER TABLE beverages ADD COLUMN IF NOT EXISTS image_url varchar(255) DEFAULT NULL');
                 await connection.query('UPDATE dishes SET discount_percentage = 0.00 WHERE discount_percentage > 0 AND name LIKE "%vegitable fride rice%"');
             } catch (e) {}
-            
+
             connection.release();
             return;
         } catch (err) {
