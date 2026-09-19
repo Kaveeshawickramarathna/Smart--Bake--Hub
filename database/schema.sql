@@ -260,11 +260,14 @@ DROP TABLE IF EXISTS `orders`;
 /*!50503 SET character_set_client = utf8mb4 */;
 CREATE TABLE `orders` (
   `id` int NOT NULL AUTO_INCREMENT,
-  `user_id` int NOT NULL,
+  `user_id` int DEFAULT NULL,
   `total_amount` decimal(10,2) NOT NULL,
   `order_type` varchar(50) DEFAULT 'dine-in',
   `table_number` varchar(50) DEFAULT NULL,
   `status` varchar(50) DEFAULT 'pending',
+  `payment_method` varchar(50) DEFAULT 'cash',
+  `payment_status` varchar(50) DEFAULT 'pending',
+  `stripe_session_id` varchar(255) DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),

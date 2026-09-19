@@ -51,6 +51,13 @@ const ready = (async () => {
             await ensureColumnExists(connection, 'dishes', 'discount_percentage', 'decimal(5,2) DEFAULT 0.00');
             await ensureColumnExists(connection, 'beverages', 'image_url', 'varchar(255) DEFAULT NULL');
             await ensureColumnExists(connection, 'beverages', 'discount_percentage', 'decimal(5,2) DEFAULT 0.00');
+            await ensureColumnExists(connection, 'orders', 'payment_method', "varchar(50) DEFAULT 'cash'");
+            await ensureColumnExists(connection, 'orders', 'payment_status', "varchar(50) DEFAULT 'pending'");
+            await ensureColumnExists(connection, 'orders', 'stripe_session_id', 'varchar(255) DEFAULT NULL');
+            
+            try {
+                await connection.query('ALTER TABLE orders MODIFY COLUMN user_id INT DEFAULT NULL');
+            } catch (e) {}
             
             try {
                 await connection.query('UPDATE dishes SET discount_percentage = 0.00 WHERE discount_percentage > 0 AND name LIKE "%vegitable fride rice%"');
