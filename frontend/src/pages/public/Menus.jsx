@@ -423,7 +423,7 @@ const Menus = () => {
                             </div>
 
                             <div className="flex flex-wrap items-center gap-3 text-xs font-bold text-gray-500">
-                                <span className="bg-[#2E1A12] text-white px-3.5 py-1.5 rounded-full shadow-sm">
+                                <span className="bg-[#2E1A12]/70 text-white px-3.5 py-1.5 rounded-full shadow-sm">
                                     {filteredItems.length} items found
                                 </span>
                                 {selectedCategory !== 'All' && (
