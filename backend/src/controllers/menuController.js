@@ -60,17 +60,21 @@ const getMenuById = async (req, res) => {
 // @desc    Create a menu
 const createMenu = async (req, res) => {
     const { name, dish_code, menu_category, category_id, portion_type, price, price_small, price_large, status = 'active', productItems = [] } = req.body;
+    let image_url = req.body.image_url || null;
+    if (req.file) {
+        image_url = `/uploads/${req.file.filename}`;
+    }
 
     try {
         // Insert menu
         const [result] = await pool.query(
-            'INSERT INTO dishes (category_id, menu_category, dish_code, name, portion_type, price, price_small, price_large, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-            [category_id || null, menu_category || null, dish_code, name, portion_type || 'regular', price || 0, price_small || 0, price_large || 0, status]
+            'INSERT INTO dishes (category_id, menu_category, dish_code, name, portion_type, price, price_small, price_large, status, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+            [category_id || null, menu_category || null, dish_code, name, portion_type || 'regular', price || 0, price_small || 0, price_large || 0, status, image_url]
         );
 
         const menuId = result.insertId;
 
-        res.status(201).json({ id: menuId, message: 'Menu created successfully' });
+        res.status(201).json({ id: menuId, message: 'Menu created successfully', image_url });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -81,14 +85,26 @@ const updateMenu = async (req, res) => {
     const { name, dish_code, menu_category, category_id, portion_type, price, price_small, price_large, status, discount_percentage, productItems = [] } = req.body;
     const { id } = req.params;
 
-    try {
-        // Update menu
-        await pool.query(
-            'UPDATE dishes SET name=?, dish_code=?, menu_category=?, category_id=?, portion_type=?, price=?, price_small=?, price_large=?, status=?, discount_percentage=? WHERE id=?',
-            [name, dish_code, menu_category || null, category_id || null, portion_type || 'regular', price || 0, price_small || 0, price_large || 0, status || 'active', discount_percentage || 0, id]
-        );
+    let image_url = req.body.image_url;
+    if (req.file) {
+        image_url = `/uploads/${req.file.filename}`;
+    }
 
-        res.json({ message: 'Menu updated successfully' });
+    try {
+        let query = 'UPDATE dishes SET name=?, dish_code=?, menu_category=?, category_id=?, portion_type=?, price=?, price_small=?, price_large=?, status=?, discount_percentage=?';
+        let params = [name, dish_code, menu_category || null, category_id || null, portion_type || 'regular', price || 0, price_small || 0, price_large || 0, status || 'active', discount_percentage || 0];
+        
+        if (image_url !== undefined) {
+            query += ', image_url=?';
+            params.push(image_url);
+        }
+        
+        query += ' WHERE id=?';
+        params.push(id);
+
+        await pool.query(query, params);
+
+        res.json({ message: 'Menu updated successfully', image_url });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }

@@ -139,13 +139,13 @@ const verifyOtp = async (req, res) => {
         }
 
         const user = users[0];
+        
+        if (user.verification_token !== otp) {
+            return res.status(400).json({ message: 'Invalid OTP code' });
+        }
 
         if (user.status === 'active') {
             return res.status(400).json({ message: 'Account is already verified' });
-        }
-
-        if (user.verification_token !== otp) {
-            return res.status(400).json({ message: 'Invalid OTP code' });
         }
 
         if (newPassword) {

@@ -3,15 +3,15 @@ const pool = require('../config/db');
 // @desc    Get all products
 const getProducts = async (req, res) => {
     try {
-        const { keyword, category, discounted } = req.query;
+        const { keyword, category, discounted, include_unavailable } = req.query;
         const userRole = req.user?.role || 'customer'; // Get user role from token or default to customer
         
         let query = 'SELECT p.*, c.name as category_name FROM products p LEFT JOIN product_categories c ON p.category_id = c.id WHERE 1=1';
         let queryParams = [];
 
-        // Filter by availability for non-admin and non-staff users
-        if (userRole !== 'admin' && userRole !== 'staff') {
-            query += ' AND p.availability = ?';
+        // Filter by availability for customer unless include_unavailable=true
+        if (include_unavailable !== 'true' && userRole !== 'admin' && userRole !== 'staff') {
+            query += ' AND (p.availability = ? OR p.availability IS NULL)';
             queryParams.push('available');
         }
 
@@ -142,12 +142,32 @@ const updateProductDiscount = async (req, res) => {
         } else if (item_type === 'product') {
             await pool.query('UPDATE products SET discount_percentage = ? WHERE id = ?', [disc, id]);
         } else {
-            await pool.query('UPDATE products SET discount_percentage = ? WHERE id = ?', [disc, id]);
-            await pool.query('UPDATE dishes SET discount_percentage = ? WHERE id = ?', [disc, id]);
-            await pool.query('UPDATE beverages SET discount_percentage = ? WHERE id = ?', [disc, id]);
+            return res.status(400).json({ message: 'item_type is required (product, dish, or beverage)' });
         }
 
+        // Invalidate waste cache so new discount immediately reflects
+        try {
+            const { invalidateWasteCache } = require('./aiController');
+            if (invalidateWasteCache) invalidateWasteCache();
+        } catch (e) {}
+
         res.json({ message: 'Discount updated successfully', id, discount_percentage: disc });
+    } catch (error) {
+        res.status(500).json({ message: error.message });
+    }
+};
+
+// @desc    Toggle product availability (available <-> out_of_stock)
+const toggleProductAvailability = async (req, res) => {
+    try {
+        const [product] = await pool.query('SELECT availability FROM products WHERE id = ?', [req.params.id]);
+        if (product.length === 0) {
+            return res.status(404).json({ message: 'Product not found' });
+        }
+        const currentAvail = (product[0].availability || 'available').toLowerCase();
+        const newAvailability = currentAvail === 'available' ? 'out_of_stock' : 'available';
+        await pool.query('UPDATE products SET availability = ? WHERE id = ?', [newAvailability, req.params.id]);
+        res.json({ message: 'Availability updated successfully', availability: newAvailability });
     } catch (error) {
         res.status(500).json({ message: error.message });
     }
@@ -161,5 +181,6 @@ module.exports = {
     deleteProduct,
     getCategories,
     createCategory,
-    updateProductDiscount
+    updateProductDiscount,
+    toggleProductAvailability
 };

@@ -5,7 +5,21 @@ const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
 const isRealStripeKey = stripeSecretKey && stripeSecretKey.startsWith('sk_') && !stripeSecretKey.includes('your_stripe_secret_key_here');
 const stripe = isRealStripeKey ? new Stripe(stripeSecretKey) : null;
 
-const frontendUrl = process.env.FRONTEND_URL || 'http://localhost';
+const getFrontendUrl = (req) => {
+    // Prefer origin header from request if available and clean
+    const origin = req.headers.origin || req.headers.referer;
+    if (origin && origin.startsWith('http')) {
+        try {
+            const parsed = new URL(origin);
+            return parsed.origin;
+        } catch (e) {
+            // Ignore parse failure
+        }
+    }
+    const envUrl = process.env.FRONTEND_URL || 'https://smartbakehouse.iobuilds.com';
+    return envUrl.split(',')[0].trim().replace(/\/+$/, '');
+};
+
 const currency = (process.env.STRIPE_CURRENCY || 'lkr').toLowerCase();
 
 const createCheckoutSession = async (req, res) => {
@@ -13,6 +27,8 @@ const createCheckoutSession = async (req, res) => {
     if (!orderId) {
         return res.status(400).json({ message: 'orderId is required' });
     }
+
+    const frontendUrl = getFrontendUrl(req);
 
     try {
         const [orders] = await pool.query('SELECT * FROM orders WHERE id = ? AND user_id = ?', [orderId, req.user.id]);
@@ -38,14 +54,26 @@ const createCheckoutSession = async (req, res) => {
                     [orderId]
                 );
 
-                const lineItems = items.map(item => ({
+                let lineItems = items.map(item => ({
                     price_data: {
                         currency,
                         product_data: { name: item.item_name || item.menu_name || item.product_name || item.beverage_name || 'Order item' },
-                        unit_amount: Math.round(Number(item.price) * 100)
+                        unit_amount: Math.max(1, Math.round(Number(item.price || 0) * 100))
                     },
-                    quantity: item.quantity
+                    quantity: item.quantity || 1
                 }));
+
+                if (lineItems.length === 0) {
+                    const fallbackAmount = Math.max(1, Math.round(Number(order.total_amount || 0) * 100));
+                    lineItems = [{
+                        price_data: {
+                            currency,
+                            product_data: { name: `Smart Bake House Order #${orderId}` },
+                            unit_amount: fallbackAmount
+                        },
+                        quantity: 1
+                    }];
+                }
 
                 const session = await stripe.checkout.sessions.create({
                     mode: 'payment',
@@ -60,7 +88,7 @@ const createCheckoutSession = async (req, res) => {
 
                 return res.status(200).json({ url: session.url });
             } catch (stripeErr) {
-                console.warn('Stripe API call failed, falling back to Demo payment mode:', stripeErr.message);
+                console.error('Stripe session creation failed:', stripeErr);
             }
         }
 

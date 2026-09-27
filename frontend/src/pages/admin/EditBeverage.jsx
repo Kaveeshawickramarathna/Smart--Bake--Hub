@@ -1,20 +1,21 @@
 import { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { ArrowLeft, X, Image as ImageIcon } from 'lucide-react';
+import { useNavigate, useParams } from 'react-router-dom';
+import { ArrowLeft, X, Image as ImageIcon, Plus, Trash2 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import api from '../../services/api';
-import { mockBeverageCategories } from '../../data/mockBeverages';
-
 import CreatableSelect from 'react-select/creatable';
 
-const AddBeverage = ({ onBack }) => {
+const EditBeverage = ({ onBack }) => {
     const navigate = useNavigate();
+    const { id } = useParams();
 
     const handleBack = () => {
         if (onBack) onBack();
         else navigate('/admin/beverages');
     };
-    const [loading, setLoading] = useState(false);
+
+    const [loading, setLoading] = useState(true);
+    const [submitting, setSubmitting] = useState(false);
     const [categoriesList, setCategoriesList] = useState([]);
     const [preview, setPreview] = useState(null);
     const [formData, setFormData] = useState({
@@ -23,9 +24,10 @@ const AddBeverage = ({ onBack }) => {
         beverage_category_id: '',
         portion_type: 'regular',
         price: '',
-        price_small: '',
-        price_large: '',
         price_variants: [],
+        discount_percentage: 0,
+        status: 'active',
+        is_available: 1,
         image: null
     });
 
@@ -33,19 +35,64 @@ const AddBeverage = ({ onBack }) => {
 
     useEffect(() => {
         const load = async () => {
+            setLoading(true);
             try {
-                const [bevCatRes, codeRes] = await Promise.all([
+                const [bevCatRes, bevRes] = await Promise.all([
                     api.get('/beverages/categories').catch(() => ({ data: [] })),
-                    api.get('/beverages/next-code').catch(() => ({ data: { nextCode: 'WBB0001' } }))
+                    api.get(`/beverages/${id}`)
                 ]);
+
                 setCategoriesList(bevCatRes.data || []);
-                setFormData(prev => ({ ...prev, beverage_code: codeRes.data.nextCode || 'WBB0001' }));
+                const bev = bevRes.data;
+
+                let parsedVariants = [];
+                if (bev.price_variants) {
+                    try {
+                        const raw = typeof bev.price_variants === 'string' ? JSON.parse(bev.price_variants) : bev.price_variants;
+                        if (Array.isArray(raw)) {
+                            parsedVariants = raw.map(v => {
+                                const sizeStr = String(v.size || '');
+                                const unitMatch = sizeStr.match(/(ml|l|can|bottle)$/i);
+                                const unit = unitMatch ? unitMatch[0].toLowerCase() : 'ml';
+                                const amount = sizeStr.replace(new RegExp(unit + '$', 'i'), '').trim();
+                                return {
+                                    size_amount: amount || sizeStr,
+                                    size_unit: unit,
+                                    price: v.price || ''
+                                };
+                            });
+                        }
+                    } catch (e) {
+                        console.error('Failed to parse price variants', e);
+                    }
+                }
+
+                setFormData({
+                    beverage_code: bev.beverage_code || '',
+                    name: bev.name || '',
+                    beverage_category_id: bev.beverage_category_id || '',
+                    portion_type: bev.portion_type || 'regular',
+                    price: bev.price || '',
+                    price_variants: parsedVariants,
+                    discount_percentage: bev.discount_percentage || 0,
+                    status: bev.status || 'active',
+                    is_available: bev.is_available ?? 1,
+                    image: null
+                });
+
+                if (bev.image_url) {
+                    setPreview(bev.image_url);
+                }
             } catch (err) {
-                setCategoriesList([]);
+                console.error('Failed to fetch beverage details:', err);
+                toast.error('Failed to load beverage details');
+                navigate('/admin/beverages');
+            } finally {
+                setLoading(false);
             }
         };
         load();
-    }, []);
+    }, [id, navigate]);
 
     const handleInputChange = (e) => {
         const { name, value } = e.target;
@@ -59,7 +106,10 @@ const AddBeverage = ({ onBack }) => {
     };
 
     const addVariant = () => {
-        setFormData(prev => ({ ...prev, price_variants: [...prev.price_variants, { size_amount: '', size_unit: 'ml', price: '' }] }));
+        setFormData(prev => ({
+            ...prev,
+            price_variants: [...prev.price_variants, { size_amount: '', size_unit: 'ml', price: '' }]
+        }));
     };
 
     const removeVariant = (index) => {
@@ -88,7 +138,7 @@ const AddBeverage = ({ onBack }) => {
             toast.error('Description is required');
             return;
         }
-        setLoading(true);
+        setSubmitting(true);
         try {
             const res = await api.post('/beverages/categories', pendingBeverageCategory);
             const newCat = { id: res.data.id, name: res.data.name };
@@ -99,7 +149,7 @@ const AddBeverage = ({ onBack }) => {
         } catch (err) {
             toast.error(err?.response?.data?.message || 'Failed to add beverage category');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
 
@@ -108,10 +158,7 @@ const AddBeverage = ({ onBack }) => {
         label: cat.name
     }));
 
-
-
     const validateForm = () => {
-        if (!formData.beverage_code.trim()) { toast.error('Beverage code is required'); return false; }
         if (!formData.name.trim()) { toast.error('Beverage name is required'); return false; }
         if (!formData.beverage_category_id) { toast.error('Beverage category is required'); return false; }
         
@@ -123,8 +170,8 @@ const AddBeverage = ({ onBack }) => {
                 return false;
             }
             for (const v of formData.price_variants) {
-                if (!v.size_amount || parseFloat(v.size_amount) <= 0 || !v.price || parseFloat(v.price) <= 0) {
-                    toast.error('All variants must have a valid size amount and price');
+                if (!v.size_amount || !v.price || parseFloat(v.price) <= 0) {
+                    toast.error('All variants must have a valid size and price');
                     return false;
                 }
             }
@@ -136,7 +183,7 @@ const AddBeverage = ({ onBack }) => {
         e.preventDefault();
         if (!validateForm()) return;
 
-        setLoading(true);
+        setSubmitting(true);
         try {
             const formDataToSend = new FormData();
             formDataToSend.append('beverage_code', formData.beverage_code);
@@ -147,21 +194,33 @@ const AddBeverage = ({ onBack }) => {
             if (formData.portion_type === 'bottles') {
                 formDataToSend.append('price_variants', JSON.stringify(formData.price_variants.map(v => ({ size: `${v.size_amount}${v.size_unit}`, price: parseFloat(v.price) }))));
             }
+            formDataToSend.append('discount_percentage', parseFloat(formData.discount_percentage) || 0);
+            formDataToSend.append('status', formData.status);
+            formDataToSend.append('is_available', formData.is_available ? 1 : 0);
+
             if (formData.image) {
                 formDataToSend.append('image', formData.image);
             }
 
-            await api.post('/beverages', formDataToSend, {
+            await api.put(`/beverages/${id}`, formDataToSend, {
                 headers: { 'Content-Type': 'multipart/form-data' }
             });
-            toast.success('Beverage added successfully');
+            toast.success('Beverage updated successfully');
             handleBack();
         } catch (err) {
-            toast.error(err?.response?.data?.message || 'Failed to create beverage');
+            toast.error(err?.response?.data?.message || 'Failed to update beverage');
         } finally {
-            setLoading(false);
+            setSubmitting(false);
         }
     };
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center p-12 text-[#2E1A12]/60 font-medium">
+                Loading beverage details...
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -170,8 +229,8 @@ const AddBeverage = ({ onBack }) => {
                     <ArrowLeft className="w-6 h-6" />
                 </button>
                 <div>
-                    <h1 className="text-3xl font-bold">Create New Beverage</h1>
-                    <p className="text-sm mt-1">Add details for the new beverage</p>
+                    <h1 className="text-3xl font-bold">Edit Beverage</h1>
+                    <p className="text-sm mt-1">Modify beverage details, sizes, and pricing</p>
                 </div>
             </div>
 
@@ -181,13 +240,13 @@ const AddBeverage = ({ onBack }) => {
                     <div className="lg:col-span-2 space-y-6">
                         <div className="grid grid-cols-2 gap-4">
                             <div className="bg-white rounded-xl border p-6">
-                                <label className="block text-sm font-semibold mb-2">Beverage Code <span className="text-red-500">*</span></label>
-                                <input name="beverage_code" value={formData.beverage_code} readOnly className="w-full px-4 py-2.5 border rounded-lg bg-gray-100 cursor-not-allowed text-gray-500" />
+                                <label className="block text-sm font-semibold mb-2">Beverage Code</label>
+                                <input name="beverage_code" value={formData.beverage_code} readOnly className="w-full px-4 py-2.5 border rounded-lg bg-gray-100 cursor-not-allowed text-gray-500 font-mono" />
                             </div>
 
                             <div className="bg-white rounded-xl border p-6">
                                 <label className="block text-sm font-semibold mb-2">Beverage Name <span className="text-red-500">*</span></label>
-                                <input name="name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg" />
+                                <input name="name" value={formData.name} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
                             </div>
                         </div>
 
@@ -195,7 +254,7 @@ const AddBeverage = ({ onBack }) => {
                             <label className="block text-sm font-semibold mb-2">Beverage Category <span className="text-red-500">*</span></label>
                             <CreatableSelect
                                 isClearable
-                                isLoading={loading}
+                                isLoading={submitting}
                                 options={categoryOptions}
                                 value={categoryOptions.find(c => c.value === formData.beverage_category_id) || null}
                                 onChange={(selected) => setFormData(prev => ({ ...prev, beverage_category_id: selected ? selected.value : '' }))}
@@ -267,121 +326,123 @@ const AddBeverage = ({ onBack }) => {
                                         onChange={handleInputChange} 
                                         className="text-[#C8843B]" 
                                     />
-                                    <span className="text-sm font-medium">Bottle / Size Variations</span>
+                                    <span className="text-sm font-medium">Multiple Sizes / Bottles</span>
                                 </label>
                             </div>
 
-                            {formData.portion_type === 'regular' && (
+                            {formData.portion_type === 'regular' ? (
                                 <div>
-                                    <label className="block text-xs font-semibold mb-2 text-gray-500">Regular Price (Rs.) <span className="text-red-500">*</span></label>
-                                    <input name="price" type="number" step="0.01" min="0" value={formData.price} onChange={handleInputChange} className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
+                                    <label className="block text-sm font-semibold mb-2">Price (Rs.) <span className="text-red-500">*</span></label>
+                                    <input type="number" step="0.01" name="price" value={formData.price} onChange={handleInputChange} placeholder="0.00" className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
                                 </div>
-                            )}
-                        </div>
-
-                        {formData.portion_type === 'bottles' && (
-                            <div className="bg-white rounded-xl border p-6">
-                                <div className="flex justify-between items-center mb-4">
-                                    <label className="block text-sm font-semibold">Size Variations</label>
-                                    <button type="button" onClick={addVariant} className="text-sm text-[#C8843B] font-bold hover:underline">+ Add Size</button>
-                                </div>
-
-                                {formData.price_variants.map((variant, index) => (
-                                    <div key={index} className="flex gap-4 items-end mb-3 bg-gray-50 p-3 rounded-lg border">
-                                        <div className="flex-1">
-                                            <label className="block text-xs font-semibold mb-1 text-gray-600">Size Amount</label>
-                                            <div className="flex">
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="flex justify-between items-center mb-2">
+                                        <label className="block text-sm font-semibold">Size Variants</label>
+                                        <button 
+                                            type="button" 
+                                            onClick={addVariant}
+                                            className="flex items-center gap-1.5 px-3 py-1.5 bg-[#C8843B]/10 text-[#C8843B] hover:bg-[#C8843B]/20 rounded-lg text-sm font-bold transition-colors"
+                                        >
+                                            <Plus className="w-4 h-4" /> Add Size
+                                        </button>
+                                    </div>
+                                    {formData.price_variants.map((variant, index) => (
+                                        <div key={index} className="flex gap-3 items-center bg-gray-50/70 p-3 rounded-xl border">
+                                            <div className="w-1/3">
                                                 <input 
-                                                    type="number" min="1" 
+                                                    type="text" 
+                                                    placeholder="e.g. 250" 
                                                     value={variant.size_amount} 
                                                     onChange={(e) => handleVariantChange(index, 'size_amount', e.target.value)} 
-                                                    className="w-full px-3 py-2 border rounded-l-lg" 
-                                                    placeholder="e.g. 500" 
+                                                    className="w-full px-3 py-2 border rounded-lg bg-white"
                                                 />
+                                            </div>
+                                            <div className="w-1/4">
                                                 <select 
                                                     value={variant.size_unit} 
                                                     onChange={(e) => handleVariantChange(index, 'size_unit', e.target.value)} 
-                                                    className="border-t border-b border-r rounded-r-lg px-2 bg-gray-100 text-sm font-semibold"
+                                                    className="w-full px-3 py-2 border rounded-lg bg-white"
                                                 >
                                                     <option value="ml">ml</option>
-                                                    <option value="L">L</option>
+                                                    <option value="l">L</option>
+                                                    <option value="can">Can</option>
+                                                    <option value="bottle">Bottle</option>
                                                 </select>
                                             </div>
+                                            <div className="flex-1">
+                                                <input 
+                                                    type="number" 
+                                                    placeholder="Price Rs." 
+                                                    value={variant.price} 
+                                                    onChange={(e) => handleVariantChange(index, 'price', e.target.value)} 
+                                                    className="w-full px-3 py-2 border rounded-lg bg-white"
+                                                />
+                                            </div>
+                                            <button 
+                                                type="button" 
+                                                onClick={() => removeVariant(index)}
+                                                className="p-2 text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                                            >
+                                                <Trash2 className="w-4 h-4" />
+                                            </button>
                                         </div>
-                                        <div className="flex-1">
-                                            <label className="block text-xs font-semibold mb-1 text-gray-600">Price (Rs.)</label>
-                                            <input 
-                                                type="number" step="0.01" min="0" 
-                                                value={variant.price} 
-                                                onChange={(e) => handleVariantChange(index, 'price', e.target.value)} 
-                                                className="w-full px-3 py-2 border rounded-lg" 
-                                                placeholder="Enter price..." 
-                                            />
-                                        </div>
-                                        <button type="button" onClick={() => removeVariant(index)} className="p-2 text-red-500 hover:bg-red-50 rounded-lg mb-1">
-                                            <X className="w-5 h-5" />
-                                        </button>
-                                    </div>
-                                ))}
-                                {formData.price_variants.length === 0 && (
-                                    <p className="text-sm text-gray-500 text-center py-4">No size variations added. Click '+ Add Size' to create one.</p>
-                                )}
-                            </div>
-                        )}
+                                    ))}
+                                </div>
+                            )}
 
-                        <div className="flex gap-3 pt-4">
-                            <button type="button" onClick={() => navigate('/admin/beverages')} className="flex-1 px-4 py-2.5 border rounded-lg">Cancel</button>
-                            <button type="submit" disabled={loading} className="flex-1 px-4 py-2.5 bg-[#2E1A12] text-white rounded-lg">{loading ? 'Creating...' : 'Create Beverage'}</button>
+                            <div className="mt-4">
+                                <label className="block text-sm font-semibold mb-2">Discount Percentage (%)</label>
+                                <input type="number" min="0" max="100" name="discount_percentage" value={formData.discount_percentage} onChange={handleInputChange} placeholder="0" className="w-full px-4 py-2.5 border rounded-lg focus:outline-none focus:border-[#C8843B]" />
+                            </div>
                         </div>
                     </div>
 
-                    {/* Right Column: Image Upload Section */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-xl border border-[#C8843B]/20 p-6 sticky top-20">
-                            <label className="block text-sm font-semibold text-[#2E1A12] mb-4">
-                                Beverage Image
-                            </label>
+                    {/* Right Column: Image & Actions */}
+                    <div className="space-y-6">
+                        <div className="bg-white rounded-xl border p-6 text-center">
+                            <label className="block text-sm font-semibold mb-4 text-left">Beverage Image</label>
                             
-                            <div className="mb-4">
-                                {preview ? (
-                                    <div className="w-full aspect-square rounded-lg overflow-hidden bg-[#F7F4ED] border border-[#C8843B]/20 relative group">
-                                        <img
-                                            src={preview}
-                                            alt="Preview"
-                                            className="w-full h-full object-cover"
-                                        />
-                                        <button
-                                            type="button"
-                                            onClick={() => { setPreview(null); setFormData(prev => ({ ...prev, image: null })); }}
-                                            className="absolute top-2 right-2 bg-red-500 text-white p-1.5 rounded-full hover:bg-red-600 transition-colors shadow-md"
-                                            title="Remove Image"
-                                        >
-                                            <X className="w-4 h-4" />
-                                        </button>
-                                    </div>
-                                ) : (
-                                    <div className="w-full aspect-square rounded-lg bg-[#F7F4ED] border-2 border-dashed border-[#C8843B]/30 flex flex-col items-center justify-center p-4 text-center">
-                                        <ImageIcon className="w-12 h-12 text-[#C8843B]/50 mb-2" />
-                                        <span className="text-xs text-gray-500 font-medium">No image selected</span>
-                                    </div>
-                                )}
-                            </div>
+                            {preview ? (
+                                <div className="relative rounded-xl overflow-hidden border border-gray-200 mb-4 h-52 bg-gray-50 flex items-center justify-center">
+                                    <img src={preview} alt="Preview" className="w-full h-full object-cover" />
+                                    <button 
+                                        type="button" 
+                                        onClick={() => { setFormData(prev => ({ ...prev, image: null })); setPreview(null); }}
+                                        className="absolute top-2 right-2 p-1.5 bg-red-600 text-white rounded-full hover:bg-red-700 shadow"
+                                    >
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
+                            ) : (
+                                <div className="border-2 border-dashed border-gray-300 rounded-xl p-8 mb-4 flex flex-col items-center justify-center text-gray-500 bg-gray-50/50">
+                                    <ImageIcon className="w-12 h-12 text-gray-400 mb-2" />
+                                    <span className="text-sm">Upload beverage photo</span>
+                                    <span className="text-xs text-gray-400 mt-1">JPG, PNG, WebP up to 5MB</span>
+                                </div>
+                            )}
 
-                            <label className="block">
-                                <input
-                                    type="file"
-                                    accept="image/*"
-                                    onChange={handleImageChange}
-                                    className="hidden"
-                                />
-                                <span className="block w-full px-4 py-2.5 bg-[#C8843B]/10 text-[#C8843B] text-sm font-medium text-center rounded-lg cursor-pointer hover:bg-[#C8843B]/20 transition-colors">
-                                    {preview ? 'Change Image' : 'Choose Beverage Image'}
-                                </span>
+                            <label className="inline-block px-4 py-2 border border-[#C8843B] text-[#C8843B] rounded-lg cursor-pointer hover:bg-[#C8843B]/10 transition-colors font-medium text-sm">
+                                Choose New Image
+                                <input type="file" accept="image/*" onChange={handleImageChange} className="hidden" />
                             </label>
+                        </div>
 
-                            <p className="text-xs text-[#2E1A12]/60 mt-3">
-                                Recommended: 600x400px or square, JPG or PNG format.
-                            </p>
+                        <div className="bg-white rounded-xl border p-6 space-y-4">
+                            <button
+                                type="submit"
+                                disabled={submitting}
+                                className="w-full py-3 bg-[#C8843B] text-white rounded-xl font-bold shadow hover:bg-[#A66D31] transition-all disabled:opacity-50"
+                            >
+                                {submitting ? 'Saving Changes...' : 'Save Changes'}
+                            </button>
+                            <button
+                                type="button"
+                                onClick={handleBack}
+                                className="w-full py-3 border border-gray-200 text-gray-700 rounded-xl font-bold hover:bg-gray-50 transition-colors"
+                            >
+                                Cancel
+                            </button>
                         </div>
                     </div>
                 </form>
@@ -390,4 +451,4 @@ const AddBeverage = ({ onBack }) => {
     );
 };
 
-export default AddBeverage;
+export default EditBeverage;

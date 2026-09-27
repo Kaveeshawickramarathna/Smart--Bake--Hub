@@ -18,6 +18,18 @@ const ProductMenuManagement = ({ onNavigateToAdd }) => {
     const [togglingMenuId, setTogglingMenuId] = useState(null);
     const [togglingAvailabilityId, setTogglingAvailabilityId] = useState(null);
     const [editingPrice, setEditingPrice] = useState({ menuId: null, priceType: null, value: '' });
+    const [deletingMenu, setDeletingMenu] = useState(null);
+
+    const handleDeleteMenu = async (id) => {
+        try {
+            await api.delete(`/menus/${id}`);
+            setMenus(prev => prev.filter(m => m.id !== id));
+            toast.success('Dish deleted successfully');
+            setDeletingMenu(null);
+        } catch (err) {
+            toast.error(err.response?.data?.message || 'Failed to delete dish');
+        }
+    };
 
     // Fetch Menus Data
     const fetchMenusData = async () => {
@@ -169,15 +181,45 @@ const ProductMenuManagement = ({ onNavigateToAdd }) => {
                             key={menu.id}
                             className="bg-white rounded-2xl border border-[#C8843B]/20 overflow-hidden hover:shadow-lg transition-shadow flex flex-col justify-between"
                         >
+                            {/* Dish Image Banner if uploaded */}
+                            {menu.image_url && (
+                                <div className="h-44 w-full overflow-hidden bg-gray-100 relative">
+                                    <img 
+                                        src={menu.image_url} 
+                                        alt={menu.name} 
+                                        className="w-full h-full object-cover hover:scale-105 transition-transform duration-500" 
+                                        onError={(e) => { e.target.style.display = 'none'; }}
+                                    />
+                                </div>
+                            )}
+
                             {/* Header */}
                             <div className="bg-gradient-to-r from-[#2E1A12] to-[#C8843B] p-5 text-white flex justify-between items-start gap-4">
                                 <div className="flex-1">
                                     <h3 className="font-bold text-lg font-serif leading-tight">{menu.name}</h3>
                                     <p className="text-xs text-white/80 mt-2 font-semibold tracking-wide">{menu.dish_code || 'NO CODE'}</p>
                                 </div>
-                                <div className="text-right flex-shrink-0">
-                                    <p className="font-bold text-sm">{menu.menu_category || 'N/A'}</p>
-                                    <p className="text-[10px] text-white/80 mt-2 uppercase tracking-wider font-semibold">{menu.category_name || menu.category}</p>
+                                <div className="text-right flex-shrink-0 flex flex-col items-end gap-2">
+                                    <div>
+                                        <p className="font-bold text-sm">{menu.menu_category || 'N/A'}</p>
+                                        <p className="text-[10px] text-white/80 uppercase tracking-wider font-semibold">{menu.category_name || menu.category}</p>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 mt-1">
+                                        <button
+                                            onClick={() => navigate(`/admin/menus/edit/${menu.id}`)}
+                                            className="p-1.5 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-all"
+                                            title="Edit Dish"
+                                        >
+                                            <Edit2 className="w-3.5 h-3.5" />
+                                        </button>
+                                        <button
+                                            onClick={() => setDeletingMenu(menu)}
+                                            className="p-1.5 bg-red-500/30 hover:bg-red-500/50 text-white rounded-lg transition-all"
+                                            title="Delete Dish"
+                                        >
+                                            <Trash2 className="w-3.5 h-3.5" />
+                                        </button>
+                                    </div>
                                 </div>
                             </div>
 
@@ -306,6 +348,15 @@ const ProductMenuManagement = ({ onNavigateToAdd }) => {
                 </div>
             )}
 
+            {deletingMenu && (
+                <DeleteConfirmation
+                    isOpen={!!deletingMenu}
+                    onClose={() => setDeletingMenu(null)}
+                    onConfirm={() => handleDeleteMenu(deletingMenu.id)}
+                    title="Delete Dish"
+                    message={`Are you sure you want to delete "${deletingMenu.name}"? This action cannot be undone.`}
+                />
+            )}
 
         </div>
     );

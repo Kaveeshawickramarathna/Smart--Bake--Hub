@@ -1,4 +1,26 @@
 const pool = require('../config/db');
+const { sendChatCompletion } = require('../utils/aiGateway');
+
+/**
+ * Look up order status if an order number is mentioned in customer message
+ */
+const lookupOrderSummary = async (text) => {
+    if (!text) return null;
+    const match = text.match(/#?(\d{1,6})/);
+    if (!match) return null;
+
+    const orderId = match[1];
+    try {
+        const [orders] = await pool.query('SELECT id, status, total_amount, created_at FROM orders WHERE id = ?', [orderId]);
+        if (orders.length > 0) {
+            const o = orders[0];
+            return `Order #${o.id} is currently [${o.status.toUpperCase()}]. Total: Rs. ${Number(o.total_amount).toFixed(2)}. Placed on ${new Date(o.created_at).toLocaleDateString()}.`;
+        }
+    } catch (e) {
+        // ignore lookup errors
+    }
+    return null;
+};
 
 // Customer Endpoints
 const initSession = async (req, res) => {
@@ -11,8 +33,8 @@ const initSession = async (req, res) => {
                 [session_id, user_id || null, customer_name || 'Guest', 'bot']
             );
             
-            // Send initial bot greeting
-            const greeting = "Hello! Welcome to Smart Bake Hub. How can I help you today?";
+            // Initial AI bot greeting
+            const greeting = "Hello! Welcome to Smart Bake Hub. How can I help you today with our bakery items, custom cakes, or event bookings?";
             await pool.query(
                 'INSERT INTO chat_messages (session_id, sender, message) VALUES (?, ?, ?)',
                 [session_id, 'bot', greeting]
@@ -57,29 +79,113 @@ const sendMessage = async (req, res) => {
     }
 };
 
+/**
+ * Generate intelligent AI bot reply using gpt-5.6-luna
+ */
 const triggerBotReply = async (req, res) => {
     const { session_id } = req.params;
-    const { keyword } = req.body;
+    const { keyword, message: userMsg } = req.body;
+
     try {
-        let reply = "I'm not sure about that. Would you like to talk to an admin?";
-        
-        if (keyword === 'hours') {
-            reply = "We are open from 8:00 AM to 8:00 PM every day!";
-        } else if (keyword === 'menu') {
-            reply = "You can view our menu by navigating to the 'Menu' page from the top navigation bar.";
-        } else if (keyword === 'delivery') {
-            reply = "We offer both takeaway and dine-in. Delivery options are available for special event bookings.";
-        } else if (keyword === 'contact') {
-            reply = "You can contact us at 076 8633044 or email us at wijayabakehouse@gmail.com.";
+        // Check session status first: if human admin is engaged, skip bot reply
+        const [sessions] = await pool.query('SELECT status FROM chat_sessions WHERE session_id = ?', [session_id]);
+        const currentStatus = sessions.length > 0 ? sessions[0].status : 'bot';
+        if (currentStatus === 'admin_requested' || currentStatus === 'admin_active' || currentStatus === 'closed') {
+            return res.json({ message: 'Session handled by admin or closed', status: currentStatus });
         }
 
+        // Fast-path for quick action buttons
+        if (keyword === 'hours') {
+            const hoursReply = "We are open from 8:00 AM to 8:00 PM every day! Fresh bakery items and meals are served all day.";
+            await pool.query('INSERT INTO chat_messages (session_id, sender, message) VALUES (?, ?, ?)', [session_id, 'bot', hoursReply]);
+            return res.json({ message: 'Bot replied', reply: hoursReply });
+        }
+
+        if (keyword === 'delivery') {
+            const deliveryReply = "We offer Dine-In, Quick Takeaway, and event catering delivery. You can order online through our digital menu or book our catering services!";
+            await pool.query('INSERT INTO chat_messages (session_id, sender, message) VALUES (?, ?, ?)', [session_id, 'bot', deliveryReply]);
+            return res.json({ message: 'Bot replied', reply: deliveryReply });
+        }
+
+        // Fetch recent conversation history (last 8 messages)
+        const [recentMessages] = await pool.query(
+            'SELECT sender, message FROM chat_messages WHERE session_id = ? ORDER BY created_at DESC LIMIT 8',
+            [session_id]
+        );
+        const conversationHistory = recentMessages.reverse().map(m => ({
+            role: m.sender === 'customer' ? 'user' : 'assistant',
+            content: m.message
+        }));
+
+        // Determine current customer message
+        const currentQuery = userMsg || (conversationHistory.length > 0 ? conversationHistory[conversationHistory.length - 1].content : 'Hello');
+
+        // Check for order status lookup
+        const orderInfo = await lookupOrderSummary(currentQuery);
+
+        // System prompt with bakery domain knowledge
+        const systemPrompt = `
+You are the intelligent AI Virtual Assistant for Smart Bake Hub (Wijayasiri Fresh Food Pvt Ltd).
+You provide warm, polite, and concise answers (maximum 2-3 sentences).
+
+Bakery Knowledge & Services:
+- Products: Artisan breads, sourdough, croissants, buns, pastries, custom celebratory cakes, meals, and fresh beverages.
+- Smart Deals: Special daily markdowns and discounted items available in the "Smart Deals" menu section.
+- Custom Cake Orders: Customers can customize cake designs, tiers, flavors, and icing messages.
+- Event Bookings: 3 spaces available (Grand Ballroom - 300 capacity, Sapphire Hall - 150 capacity, Ruby Garden - 100 capacity). Advance booking and deposit required.
+- Hours & Location: Open 8:00 AM - 8:00 PM every day. Phone: 076 8633044, Email: wijayabakehouse@gmail.com.
+- Payment Options: Cash, Card, Stripe online payments, and QR code pay.
+${orderInfo ? `Live Order Database Lookup Result: ${orderInfo}` : ''}
+
+Guidelines:
+- Keep responses friendly, helpful, and concise.
+- If the customer wants human help or has a complex dispute, invite them to click "Talk to Admin".
+`;
+
+        let reply = "Hello! How can I assist you with your bakery order or booking today?";
+
+        try {
+            const aiMessages = [
+                { role: 'system', content: systemPrompt },
+                ...conversationHistory
+            ];
+
+            // If the latest message isn't in history yet, append it
+            if (conversationHistory.length === 0 || conversationHistory[conversationHistory.length - 1].content !== currentQuery) {
+                aiMessages.push({ role: 'user', content: currentQuery });
+            }
+
+            const aiResponse = await sendChatCompletion({
+                messages: aiMessages,
+                temperature: 0.6,
+                max_tokens: 200
+            });
+
+            if (aiResponse && aiResponse.content) {
+                reply = aiResponse.content.trim();
+            }
+        } catch (aiErr) {
+            console.warn('[AI Chatbot] Gateway response failed, falling back to smart heuristic:', aiErr.message);
+            if (orderInfo) {
+                reply = orderInfo;
+            } else if (currentQuery.toLowerCase().includes('cake')) {
+                reply = "We craft custom birthday and wedding cakes! You can browse our cake designs or request custom icing and flavors directly through our website.";
+            } else if (currentQuery.toLowerCase().includes('event') || currentQuery.toLowerCase().includes('book')) {
+                reply = "We offer 3 beautiful event spaces: Grand Ballroom (300 guests), Sapphire Hall (150 guests), and Ruby Garden (100 guests). Visit our Event Booking page to reserve!";
+            } else {
+                reply = "Thank you for reaching out! We are delighted to serve you. You can browse our fresh menu, check today's Smart Deals, or click 'Talk to Admin' if you need direct assistance.";
+            }
+        }
+
+        // Save AI reply into chat_messages
         await pool.query(
             'INSERT INTO chat_messages (session_id, sender, message) VALUES (?, ?, ?)',
             [session_id, 'bot', reply]
         );
 
-        res.json({ message: 'Bot replied' });
+        res.json({ message: 'Bot replied', reply });
     } catch (error) {
+        console.error('Bot reply error:', error);
         res.status(500).json({ message: error.message });
     }
 };
@@ -89,7 +195,7 @@ const requestAdmin = async (req, res) => {
     try {
         await pool.query('UPDATE chat_sessions SET status = ? WHERE session_id = ?', ['admin_requested', session_id]);
         
-        const reply = "Please wait, an admin will be with you shortly.";
+        const reply = "Please wait, an admin has been notified and will be with you shortly.";
         await pool.query(
             'INSERT INTO chat_messages (session_id, sender, message) VALUES (?, ?, ?)',
             [session_id, 'bot', reply]

@@ -1,9 +1,10 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../../store/authStore';
 import { 
-    LayoutDashboard, Users, ShoppingCart, Package, Box, Calendar, 
-    Sparkles, FileText, Bell, Settings, LogOut, ChevronDown, Menu, Utensils, QrCode, Coffee, MessageSquare, Image
+    Users, ShoppingCart, Package, Box, Calendar, 
+    Sparkles, FileText, Bell, Settings, LogOut, ChevronDown, Menu, Utensils, QrCode, Coffee, MessageSquare, Image,
+    TrendingUp, Leaf, Store, ExternalLink, Cookie
 } from 'lucide-react';
 import LogoutConfirmation from '../../components/LogoutConfirmation';
 import api from '../../services/api';
@@ -16,7 +17,7 @@ const AdminLayout = () => {
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [showLogoutModal, setShowLogoutModal] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
-    const [lastNotificationId, setLastNotificationId] = useState(null);
+    const lastNotificationIdRef = useRef(null);
 
     const fetchNotifications = async () => {
         try {
@@ -28,7 +29,7 @@ const AdminLayout = () => {
             // Check if there's a NEW notification to show a toast
             if (notifications.length > 0) {
                 const latestId = notifications[0].id;
-                if (lastNotificationId !== null && latestId > lastNotificationId) {
+                if (lastNotificationIdRef.current !== null && latestId > lastNotificationIdRef.current) {
                     // It's a new notification!
                     toast.success(notifications[0].title, {
                         icon: '🔔',
@@ -39,7 +40,7 @@ const AdminLayout = () => {
                         },
                     });
                 }
-                setLastNotificationId(latestId);
+                lastNotificationIdRef.current = latestId;
             }
         } catch (error) {
             console.error('Failed to fetch notifications:', error);
@@ -50,7 +51,7 @@ const AdminLayout = () => {
         fetchNotifications();
         const interval = setInterval(fetchNotifications, 15000); // Poll every 15s
         return () => clearInterval(interval);
-    }, [lastNotificationId]);
+    }, []);
 
     const handleConfirmLogout = () => {
         logout();
@@ -59,10 +60,12 @@ const AdminLayout = () => {
     };
 
     const navigation = [
-        { name: 'Dashboard', href: user?.role === 'staff' ? '/secure-staff-portal' : '/admin', icon: LayoutDashboard },
+        { name: 'Demand Forecasting', href: '/admin/demand-forecasting', icon: TrendingUp },
+        { name: 'Food Waste Reduction', href: '/admin/food-waste-reduction', icon: Leaf },
         { name: 'Orders', href: '/admin/orders', icon: ShoppingCart },
         { name: 'Dishes', href: '/admin/menus', icon: Utensils },
         { name: 'Beverages', href: '/admin/beverages', icon: Coffee },
+        { name: 'Bakery Items', href: '/admin/products', icon: Cookie },
         { name: 'Catering Packages', href: '/admin/catering-packages', icon: Package },
         { name: 'Inventory', href: '/admin/inventory', icon: Box },
         { name: 'Users', href: '/admin/users', icon: Users, adminOnly: true },
@@ -86,21 +89,45 @@ const AdminLayout = () => {
             {/* Sidebar */}
             <div className={`fixed inset-y-0 left-0 z-50 transform ${isSidebarOpen ? 'translate-x-0' : '-translate-x-full'} lg:relative lg:translate-x-0 transition-transform duration-300 w-64 bg-[#F7F4ED] border-r border-[#C8843B]/20 flex flex-col justify-between overflow-y-auto custom-scrollbar`}>
                 <div>
-                    {/* Logo Area */}
-                    <div className="h-20 flex items-center px-6 gap-3 mb-4">
-                        <img src="/images/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-full bg-white shadow-sm" />
+                    {/* Logo Area linking to public site */}
+                    <Link 
+                        to="/" 
+                        className="h-20 flex items-center px-6 gap-3 mb-2 group hover:opacity-90 transition-all"
+                        title="Return to Customer Storefront"
+                    >
+                        <img src="/images/logo.png" alt="Logo" className="w-10 h-10 object-contain rounded-full bg-white shadow-sm group-hover:scale-105 transition-transform" />
                         <div className="flex flex-col">
-                            <span className="text-lg font-bold text-[#2E1A12] leading-tight font-serif">Smart Bake Hub</span>
-                            <span className="text-[10px] text-[#C8843B] font-medium tracking-wide">Smarter Bakery. Better Business.</span>
+                            <span className="text-lg font-bold text-[#2E1A12] leading-tight font-serif group-hover:text-[#C8843B] transition-colors">Smart Bake Hub</span>
+                            <span className="text-[10px] text-[#C8843B] font-medium tracking-wide flex items-center gap-1">
+                                <span>Smarter Bakery</span>
+                                <span className="text-gray-400">•</span>
+                                <span className="text-gray-600 underline group-hover:text-[#C8843B]">View Site &rarr;</span>
+                            </span>
                         </div>
+                    </Link>
+
+                    {/* Dedicated Back to Website button */}
+                    <div className="px-4 mb-3">
+                        <Link
+                            to="/"
+                            className="flex items-center justify-between px-4 py-2.5 rounded-xl text-[#2E1A12] bg-[#C8843B]/10 hover:bg-[#C8843B] hover:text-white transition-all font-bold text-xs border border-[#C8843B]/20 shadow-sm group"
+                        >
+                            <div className="flex items-center space-x-2.5">
+                                <Store className="w-4 h-4 text-[#C8843B] group-hover:text-white transition-colors" />
+                                <span>Customer Website</span>
+                            </div>
+                            <ExternalLink className="w-3.5 h-3.5 opacity-60 group-hover:opacity-100" />
+                        </Link>
                     </div>
 
                     {/* Main Nav */}
                     <nav className="px-4 space-y-1">
                         {navigation.map((item) => {
                             if (item.adminOnly && user?.role !== 'admin') return null;
-                            // Active when pathname equals or is a sub-route of the item href
-                            const isActive = location.pathname === item.href || location.pathname.startsWith(item.href + '/') ;
+                            // Active when pathname equals or is a distinct sub-route of the item href
+                            const isActive = location.pathname === item.href ||
+                                (item.href === '/admin/demand-forecasting' && location.pathname === '/admin') ||
+                                (item.href !== '/admin' && item.href !== '/admin/demand-forecasting' && item.href !== '/secure-staff-portal' && location.pathname.startsWith(item.href + '/'));
 
                             return (
                                 <Link
@@ -116,9 +143,6 @@ const AdminLayout = () => {
                                 </Link>
                             );
                         })}
-
-
-
                     </nav>
                 </div>
 
@@ -136,7 +160,17 @@ const AdminLayout = () => {
                         </button>
                     </div>
                     
-                    <div className="flex items-center space-x-6">
+                    <div className="flex items-center space-x-4 sm:space-x-6">
+                        {/* Header Link back to Customer Site */}
+                        <Link 
+                            to="/" 
+                            className="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-[#C8843B]/30 text-[#2E1A12] hover:bg-[#2E1A12] hover:text-white transition-all text-xs font-bold shadow-sm"
+                            title="Visit Customer Storefront"
+                        >
+                            <Store className="w-4 h-4 text-[#C8843B]" />
+                            <span className="hidden sm:inline">View Website</span>
+                        </Link>
+
                         <div className="flex items-center space-x-3">
                             <div className="flex flex-col items-end">
                                 <span className="text-sm font-semibold text-[#2E1A12]">Hi, {user?.name || 'Admin'}</span>
@@ -147,7 +181,7 @@ const AdminLayout = () => {
                             </div>
                         </div>
 
-                        <div className="flex items-center space-x-2 border-l border-[#C8843B]/20 pl-6">
+                        <div className="flex items-center space-x-2 border-l border-[#C8843B]/20 pl-4 sm:pl-6">
                             <Link to="/admin/notifications" className="relative p-2 rounded-full text-[#2E1A12] hover:bg-[#FFFDFC] hover:text-[#C8843B] transition-colors" title="Notifications">
                                 <Bell className="w-5 h-5" />
                                 {unreadCount > 0 && (

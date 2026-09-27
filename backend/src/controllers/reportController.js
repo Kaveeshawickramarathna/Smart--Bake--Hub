@@ -92,8 +92,16 @@ const getInventoryReport = async (req, res) => {
             stock_quantity: Number(p.stock_quantity)
         }));
 
-        // No price in inventory_items currently, so value is 0
-        const totalValue = 0;
+        // Calculate estimated value if unit_price column exists
+        let totalValue = 0;
+        try {
+            const [valResult] = await pool.query('SELECT SUM(stock_quantity * COALESCE(unit_price, 0)) as total_val FROM inventory_items');
+            if (valResult && valResult[0] && valResult[0].total_val) {
+                totalValue = Number(valResult[0].total_val) || 0;
+            }
+        } catch (e) {
+            totalValue = 0;
+        }
 
         // Category distribution
         const [categoriesRaw] = await pool.query('SELECT category, COUNT(*) as count FROM inventory_items GROUP BY category');

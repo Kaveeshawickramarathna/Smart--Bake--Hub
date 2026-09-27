@@ -4,11 +4,12 @@ const {
     getBeverages, getBeverageById, createBeverage, updateBeverage, deleteBeverage, getNextBeverageCode, toggleBeverageStatus, toggleBeverageAvailability, getBeverageCategories, createBeverageCategory 
 } = require('../controllers/beverageController');
 const { protect, staff, admin } = require('../middleware/authMiddleware');
+const upload = require('../middleware/uploadMiddleware');
 
 // Beverages
 router.route('/')
     .get(getBeverages)
-    .post(protect, staff, createBeverage);
+    .post(protect, staff, upload.single('image'), createBeverage);
 
 router.route('/next-code')
     .get(protect, staff, getNextBeverageCode);
@@ -19,7 +20,7 @@ router.route('/categories')
 
 router.route('/:id')
     .get(getBeverageById)
-    .put(protect, staff, updateBeverage)
+    .put(protect, staff, upload.single('image'), updateBeverage)
     .delete(protect, admin, deleteBeverage);
 
 router.route('/:id/status')

@@ -1,10 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { generateForecast, getWasteSuggestions } = require('../controllers/aiController');
+const { protect, admin, staff } = require('../middleware/authMiddleware');
 
-// In a real app, you would add auth middleware here (e.g., protect)
-router.get('/forecast', generateForecast);
-router.get('/waste', getWasteSuggestions);
-router.get('/waste-suggestions', getWasteSuggestions);
+router.get('/forecast', protect, admin, generateForecast);
+router.get('/waste', protect, staff, getWasteSuggestions);
+router.get('/waste-suggestions', protect, staff, getWasteSuggestions);
 
 module.exports = router;

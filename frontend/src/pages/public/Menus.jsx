@@ -22,7 +22,7 @@ const Menus = () => {
     const [scannedTable, setScannedTable] = useState(null);
     const [sizeSelectModal, setSizeSelectModal] = useState({ isOpen: false, item: null, action: null });
 
-    // Capture table number from URL on load
+    // Capture table number and category filter from URL on load
     useEffect(() => {
         const queryParams = new URLSearchParams(location.search);
         const table = queryParams.get('table');
@@ -35,7 +35,12 @@ const Menus = () => {
                 setScannedTable(savedTable);
             }
         }
-    }, [location]);
+
+        const cat = queryParams.get('category');
+        if (cat) {
+            setSelectedCategory(cat);
+        }
+    }, [location.search]);
 
     // Fetch dynamic menus from admin page database api
     useEffect(() => {
@@ -43,7 +48,63 @@ const Menus = () => {
             try {
                 let allItems = [];
                 
-                // Fetch Food Menus
+                // 1. Fetch Cake Designs
+                try {
+                    const { data: cakeRes } = await api.get('/cake-designs');
+                    const cakeData = cakeRes.data || cakeRes;
+                    if (cakeData && cakeData.length > 0) {
+                        const activeCakes = cakeData.filter(item => (item.status || '').toLowerCase() === 'active');
+                        const mappedCakes = activeCakes.map(item => {
+                            const pricing = Array.isArray(item.pricing_options) ? item.pricing_options : [];
+                            const startingPrice = pricing.length > 0 ? Number(pricing[0].price) : (Number(item.price) || 2500);
+                            return {
+                                code: `C${item.id}`,
+                                name: item.name,
+                                description: 'Artisan handcrafted cake design made to order with premium fresh ingredients.',
+                                price: startingPrice,
+                                category: 'Cakes',
+                                image_url: item.image_url,
+                                is_available: true,
+                                status: item.status,
+                                portion_type: pricing.length > 1 ? 'cakes' : 'standard',
+                                price_variants: pricing.map(p => ({
+                                    size: `${p.weight_kg} Kg`,
+                                    price: Number(p.price)
+                                })),
+                                discount_percentage: 0
+                            };
+                        });
+                        allItems = [...allItems, ...mappedCakes];
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch cake designs", err);
+                }
+
+                // 2. Fetch Bakery Products
+                try {
+                    const { data: prodRes } = await api.get('/products');
+                    const prodData = prodRes.data || prodRes;
+                    if (prodData && prodData.length > 0) {
+                        const activeProds = prodData.filter(item => (item.availability || 'available').toLowerCase() === 'available');
+                        const mappedProds = activeProds.map(item => ({
+                            code: `P${item.id}`,
+                            name: item.name,
+                            description: item.description,
+                            price: Number(item.price) || 0,
+                            category: item.category_name || (item.name.toLowerCase().includes('cake') ? 'Cakes' : 'Bakery Products'),
+                            image_url: item.image_url,
+                            is_available: item.availability === 'available',
+                            status: 'active',
+                            portion_type: 'standard',
+                            discount_percentage: Number(item.discount_percentage) || 0
+                        }));
+                        allItems = [...allItems, ...mappedProds];
+                    }
+                } catch (err) {
+                    console.error("Failed to fetch bakery products", err);
+                }
+
+                // 3. Fetch Food Menus (Dishes)
                 try {
                     const { data } = await api.get('/menus');
                     if (data && data.length > 0) {
@@ -68,7 +129,7 @@ const Menus = () => {
                     console.error("Failed to fetch menus from API", err);
                 }
 
-                // Fetch Beverages
+                // 4. Fetch Beverages
                 try {
                     const { data: bevData } = await api.get('/beverages');
                     if (bevData && bevData.length > 0) {
@@ -102,16 +163,44 @@ const Menus = () => {
         fetchMenus();
     }, []);
 
-    // Dynamically calculate category list based on existing items
+    // Dynamically calculate category list with preferred ordering
     const categories = useMemo(() => {
-        const uniqueCategories = ['All', ...new Set(menuItems.map(item => item.category))];
-        return uniqueCategories.map((name, idx) => ({ id: idx + 1, name }));
+        const preferredOrder = ['All', 'Bakery Products', 'Meals', 'Cakes', 'Beverages', 'Fried Rice', 'Noodles', 'Kottu', 'Chop Suey', 'Salads', 'Soups', 'General'];
+        const existingCats = Array.from(new Set(menuItems.map(item => item.category)));
+        if (!existingCats.includes('Meals') && menuItems.some(item => !['Cakes', 'Beverages', 'Bakery Products', 'Bakery'].includes(item.category))) {
+            existingCats.push('Meals');
+        }
+        
+        const sortedCats = ['All', ...existingCats.sort((a, b) => {
+            const idxA = preferredOrder.indexOf(a);
+            const idxB = preferredOrder.indexOf(b);
+            if (idxA !== -1 && idxB !== -1) return idxA - idxB;
+            if (idxA !== -1) return -1;
+            if (idxB !== -1) return 1;
+            return a.localeCompare(b);
+        })];
+
+        return sortedCats.map((name, idx) => ({ id: idx + 1, name }));
     }, [menuItems]);
 
     // Filter and search menus
     const filteredItems = useMemo(() => {
         return menuItems.filter(item => {
-            const matchesCategory = selectedCategory === 'All' || item.category === selectedCategory;
+            let matchesCategory = false;
+            if (selectedCategory === 'All') {
+                matchesCategory = true;
+            } else if (selectedCategory === 'Meals') {
+                matchesCategory = !['Cakes', 'Beverages', 'Bakery Products', 'Bakery'].includes(item.category) && !item.code.startsWith('C') && !item.code.startsWith('B') && !item.code.startsWith('P');
+            } else if (selectedCategory === 'Bakery' || selectedCategory === 'Bakery Products') {
+                matchesCategory = item.category === 'Bakery Products' || item.category === 'Bakery' || item.code.startsWith('P');
+            } else if (selectedCategory === 'Cakes') {
+                matchesCategory = item.category === 'Cakes' || item.code.startsWith('C');
+            } else if (selectedCategory === 'Beverages') {
+                matchesCategory = item.category === 'Beverages' || item.code.startsWith('B');
+            } else {
+                matchesCategory = item.category === selectedCategory;
+            }
+
             const matchesSearch = 
                 item.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                 item.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -119,6 +208,41 @@ const Menus = () => {
             return matchesCategory && matchesSearch;
         });
     }, [menuItems, selectedCategory, searchQuery]);
+
+    // Fallback appetizing imagery for items without uploaded photos
+    const getFallbackImage = (category, name = '') => {
+        const lowerCat = (category || '').toLowerCase();
+        const lowerName = (name || '').toLowerCase();
+
+        if (lowerCat.includes('cake') || lowerName.includes('cake')) {
+            return 'https://images.unsplash.com/photo-1578985545062-69928b1d9587?auto=format&fit=crop&w=800&q=80';
+        }
+        if (lowerCat.includes('rice') || lowerName.includes('rice') || lowerName.includes('nasi')) {
+            return 'https://images.unsplash.com/photo-1603133872878-684f208fb84b?auto=format&fit=crop&w=800&q=80';
+        }
+        if (lowerCat.includes('salad') || lowerName.includes('salad')) {
+            return 'https://images.unsplash.com/photo-1540420773420-3366772f4999?auto=format&fit=crop&w=800&q=80';
+        }
+        if (lowerCat.includes('soup') || lowerName.includes('soup')) {
+            return 'https://images.unsplash.com/photo-1547592166-23ac45744acd?auto=format&fit=crop&w=800&q=80';
+        }
+        if (lowerCat.includes('noodle') || lowerName.includes('noodle') || lowerCat.includes('pasta')) {
+            return 'https://images.unsplash.com/photo-1585032226651-759b368d7246?auto=format&fit=crop&w=800&q=80';
+        }
+        if (lowerCat.includes('kottu') || lowerName.includes('kottu')) {
+            return 'https://images.unsplash.com/photo-1589302168068-964664d93dc0?auto=format&fit=crop&w=800&q=80';
+        }
+        if (lowerCat.includes('chop') || lowerName.includes('chop')) {
+            return 'https://images.unsplash.com/photo-1563245372-f21724e3856d?auto=format&fit=crop&w=800&q=80';
+        }
+        if (lowerCat.includes('beverage') || lowerName.includes('juice') || lowerName.includes('tea') || lowerName.includes('coffee') || lowerName.includes('shake')) {
+            return 'https://images.unsplash.com/photo-1551024709-8f23befc6f87?auto=format&fit=crop&w=800&q=80';
+        }
+        if (lowerCat.includes('bread') || lowerCat.includes('bakery') || lowerName.includes('bread') || lowerName.includes('croissant') || lowerName.includes('muffin') || lowerName.includes('roll')) {
+            return 'https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&w=800&q=80';
+        }
+        return 'https://images.unsplash.com/photo-1546069901-ba9599a7e63c?auto=format&fit=crop&w=800&q=80';
+    };
 
     const { user } = useAuthStore();
 
@@ -130,20 +254,23 @@ const Menus = () => {
             return;
         }
 
-        if (item.portion_type === 'varied' || item.portion_type === 'bottles') {
+        if (item.portion_type === 'varied' || item.portion_type === 'bottles' || item.portion_type === 'cakes' || (item.price_variants && item.price_variants.length > 1)) {
             setSizeSelectModal({ isOpen: true, item, action: 'cart' });
             return;
         }
 
         const itemId = `wijayasiri-${item.code}`;
         const finalName = item.name;
-        const finalPrice = item.price || 0;
+        const discount = Number(item.discount_percentage) || 0;
+        const discountedPrice = discount > 0 ? (item.price * (1 - discount / 100)) : item.price;
+        const finalPrice = discountedPrice || 0;
 
         const cartItem = { 
             id: itemId, 
             name: finalName, 
             price: finalPrice, 
-            quantity: 1 
+            quantity: 1,
+            image_url: item.image_url || getFallbackImage(item.category, item.name)
         };
 
         addToCart(cartItem);
@@ -158,7 +285,7 @@ const Menus = () => {
             return;
         }
 
-        if (item.portion_type === 'varied' || item.portion_type === 'bottles') {
+        if (item.portion_type === 'varied' || item.portion_type === 'bottles' || item.portion_type === 'cakes' || (item.price_variants && item.price_variants.length > 1)) {
             setSizeSelectModal({ isOpen: true, item, action: 'buy' });
             return;
         }
@@ -173,7 +300,8 @@ const Menus = () => {
             id: itemId, 
             name: finalName, 
             price: finalPrice, 
-            quantity: 1 
+            quantity: 1,
+            image_url: item.image_url || getFallbackImage(item.category, item.name)
         };
 
         navigate('/order', { state: { menu: orderItem } });
@@ -191,9 +319,9 @@ const Menus = () => {
             sizeName = variant === 'small' ? 'Small' : 'Large';
             finalPrice = variant === 'small' ? item.price_small : item.price_large;
         } else {
-            sizeId = variant.size.replace(/\s+/g, '-').toLowerCase();
+            sizeId = (variant.size || '').replace(/\s+/g, '-').toLowerCase();
             sizeName = variant.size;
-            finalPrice = variant.price;
+            finalPrice = Number(variant.price);
         }
 
         const discount = Number(item.discount_percentage) || 0;
@@ -206,7 +334,8 @@ const Menus = () => {
             id: itemId,
             name: finalName,
             price: discountedPrice || 0,
-            quantity: 1
+            quantity: 1,
+            image_url: item.image_url || getFallbackImage(item.category, item.name)
         };
 
         if (action === 'cart') {
@@ -228,6 +357,8 @@ const Menus = () => {
     const getCategoryEmoji = (catName) => {
         const emojis = {
             'All': '🍽️',
+            'Cakes': '🎂',
+            'Bakery Products': '🥐',
             'Soups': '🥣',
             'Salads': '🥗',
             'Fried Rice': '🍚',
@@ -239,9 +370,10 @@ const Menus = () => {
             'Vegetable Dishes': '🥦',
             'Egg Dishes': '🍳',
             'Meat Dishes': '🍗',
-            'Seafood Dishes': '🦀'
+            'Seafood Dishes': '🦀',
+            'Beverages': '🥤'
         };
-        return emojis[catName] || '🍔';
+        return emojis[catName] || '🍽️';
     };
 
     return (
@@ -358,6 +490,24 @@ const Menus = () => {
                                     >
                                         <div className="bg-white rounded-[32px] shadow-[0_15px_30px_rgba(46,26,18,0.02)] border border-[#C8843B]/10 overflow-hidden hover:shadow-2xl hover:-translate-y-1.5 transition-all duration-500 flex flex-col justify-between h-full group">
                                             
+                                            {/* Item Image Banner with graceful fallback */}
+                                            <div className="h-48 w-full overflow-hidden bg-[#F7F4ED] relative">
+                                                <img 
+                                                    src={item.image_url || getFallbackImage(item.category, item.name)} 
+                                                    alt={item.name} 
+                                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" 
+                                                    onError={(e) => { 
+                                                        e.target.onerror = null;
+                                                        e.target.src = getFallbackImage(item.category, item.name);
+                                                    }}
+                                                />
+                                                {item.category === 'Cakes' && (
+                                                    <span className="absolute top-3 left-3 bg-[#2E1A12]/85 backdrop-blur-md text-white text-[10px] font-bold px-2.5 py-1 rounded-full border border-white/20 shadow-sm">
+                                                        🎂 Handcrafted Cake
+                                                    </span>
+                                                )}
+                                            </div>
+
                                             {/* Top Card Area */}
                                             <div className="p-6 space-y-4">
                                                 <div className="flex justify-between items-start gap-4">
@@ -397,7 +547,9 @@ const Menus = () => {
                                                 {/* Price & Action Row */}
                                                 <div className="flex items-center justify-between border-t border-[#F7F4ED] pt-4 mt-2">
                                                     <div>
-                                                        <div className="text-[9px] text-gray-400 font-black uppercase tracking-wider">{item.portion_type === 'varied' ? 'Small / Large' : 'Price'}</div>
+                                                        <div className="text-[9px] text-gray-400 font-black uppercase tracking-wider">
+                                                            {item.portion_type === 'varied' ? 'Small / Large' : (item.price_variants && item.price_variants.length > 0) ? 'Weights / Sizes' : 'Price'}
+                                                        </div>
                                                         <div className="text-xl font-black text-[#C8843B] transition-all duration-300">
                                                             {item.portion_type === 'varied' ? (
                                                                 <div className="flex flex-col gap-1">
@@ -420,7 +572,7 @@ const Menus = () => {
                                                                         ) : `Rs. ${(item.price_large || 0).toLocaleString()}`}
                                                                     </span>
                                                                 </div>
-                                                            ) : item.portion_type === 'bottles' && item.price_variants && item.price_variants.length > 0 ? (
+                                                            ) : (item.price_variants && item.price_variants.length > 0) ? (
                                                                 <div className="flex flex-wrap gap-x-3 gap-y-1 mt-1 text-[11px] leading-tight">
                                                                     {item.price_variants.map((v, i) => (
                                                                         <span key={i} className="text-gray-700 whitespace-nowrap">
@@ -503,39 +655,41 @@ const Menus = () => {
                                 <X className="w-5 h-5" />
                             </button>
                             
-                            <h3 className="text-xl font-extrabold text-[#2E1A12] font-serif mb-1 pr-8">Select Portion Size</h3>
+                            <h3 className="text-xl font-extrabold text-[#2E1A12] font-serif mb-1 pr-8">
+                                {sizeSelectModal.item?.category === 'Cakes' ? 'Select Cake Weight' : 'Select Portion Size'}
+                            </h3>
                             <p className="text-sm font-semibold text-gray-500 mb-6">{sizeSelectModal.item?.name}</p>
                             
                             <div className="space-y-3">
-                                                                {sizeSelectModal.item?.portion_type === 'bottles' && sizeSelectModal.item?.price_variants ? (
-                                                                    sizeSelectModal.item.price_variants.map((variant, idx) => (
-                                                                        <button 
-                                                                            key={idx}
-                                                                            onClick={() => handleSizeSelection(variant)}
-                                                                            className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-[#C8843B]/10 hover:border-[#C8843B] hover:bg-[#C8843B]/5 transition-all text-left group"
-                                                                        >
-                                                                            <span className="font-extrabold text-[#2E1A12] group-hover:text-[#C8843B] transition-colors">{variant.size}</span>
-                                                                            <span className="font-black text-[#C8843B] bg-[#C8843B]/10 px-3 py-1 rounded-xl">Rs. {(Number(variant.price) || 0).toLocaleString()}</span>
-                                                                        </button>
-                                                                    ))
-                                                                ) : (
-                                                                    <>
-                                                                        <button 
-                                                                            onClick={() => handleSizeSelection('small')}
-                                                                            className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-[#C8843B]/10 hover:border-[#C8843B] hover:bg-[#C8843B]/5 transition-all text-left group"
-                                                                        >
-                                                                            <span className="font-extrabold text-[#2E1A12] group-hover:text-[#C8843B] transition-colors">Small Portion</span>
-                                                                            <span className="font-black text-[#C8843B] bg-[#C8843B]/10 px-3 py-1 rounded-xl">Rs. {(sizeSelectModal.item?.price_small || 0).toLocaleString()}</span>
-                                                                        </button>
-                                                                        <button 
-                                                                            onClick={() => handleSizeSelection('large')}
-                                                                            className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-[#C8843B]/10 hover:border-[#C8843B] hover:bg-[#C8843B]/5 transition-all text-left group"
-                                                                        >
-                                                                            <span className="font-extrabold text-[#2E1A12] group-hover:text-[#C8843B] transition-colors">Large Portion</span>
-                                                                            <span className="font-black text-[#C8843B] bg-[#C8843B]/10 px-3 py-1 rounded-xl">Rs. {(sizeSelectModal.item?.price_large || 0).toLocaleString()}</span>
-                                                                        </button>
-                                                                    </>
-                                                                )}
+                                {sizeSelectModal.item?.price_variants && sizeSelectModal.item.price_variants.length > 0 ? (
+                                    sizeSelectModal.item.price_variants.map((variant, idx) => (
+                                        <button 
+                                            key={idx}
+                                            onClick={() => handleSizeSelection(variant)}
+                                            className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-[#C8843B]/10 hover:border-[#C8843B] hover:bg-[#C8843B]/5 transition-all text-left group"
+                                        >
+                                            <span className="font-extrabold text-[#2E1A12] group-hover:text-[#C8843B] transition-colors">{variant.size}</span>
+                                            <span className="font-black text-[#C8843B] bg-[#C8843B]/10 px-3 py-1 rounded-xl">Rs. {(Number(variant.price) || 0).toLocaleString()}</span>
+                                        </button>
+                                    ))
+                                ) : (
+                                    <>
+                                        <button 
+                                            onClick={() => handleSizeSelection('small')}
+                                            className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-[#C8843B]/10 hover:border-[#C8843B] hover:bg-[#C8843B]/5 transition-all text-left group"
+                                        >
+                                            <span className="font-extrabold text-[#2E1A12] group-hover:text-[#C8843B] transition-colors">Small Portion</span>
+                                            <span className="font-black text-[#C8843B] bg-[#C8843B]/10 px-3 py-1 rounded-xl">Rs. {(sizeSelectModal.item?.price_small || 0).toLocaleString()}</span>
+                                        </button>
+                                        <button 
+                                            onClick={() => handleSizeSelection('large')}
+                                            className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-[#C8843B]/10 hover:border-[#C8843B] hover:bg-[#C8843B]/5 transition-all text-left group"
+                                        >
+                                            <span className="font-extrabold text-[#2E1A12] group-hover:text-[#C8843B] transition-colors">Large Portion</span>
+                                            <span className="font-black text-[#C8843B] bg-[#C8843B]/10 px-3 py-1 rounded-xl">Rs. {(sizeSelectModal.item?.price_large || 0).toLocaleString()}</span>
+                                        </button>
+                                    </>
+                                )}
                             </div>
                         </div>
                     </ScrollReveal>

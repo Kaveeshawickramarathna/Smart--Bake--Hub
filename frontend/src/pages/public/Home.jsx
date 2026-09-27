@@ -167,7 +167,7 @@ const Home = () => {
             title: "Bakery",
             description: "Freshly baked daily",
             img: "https://images.unsplash.com/photo-1509440159596-0249088772ff?q=80&w=500&auto=format&fit=crop",
-            link: "/menus",
+            link: "/menus?category=Bakery",
             icon: (className) => (
                 <svg className={className} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 21V9m0 0l-3.5 3.5M12 9l3.5 3.5M12 3v2M5 10c0-2.5 2-5 6-5s6 2.5 6 5M5 21v-6a2 2 0 012-2h10a2 2 0 012 2v6" />
@@ -178,14 +178,14 @@ const Home = () => {
             title: "Meals",
             description: "Delicious & healthy",
             img: "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&auto=format&fit=crop",
-            link: "/menus",
+            link: "/menus?category=Meals",
             icon: (className) => <Utensils className={className} />
         },
         {
             title: "Beverages",
             description: "Refreshing drinks",
             img: "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?q=80&w=500&auto=format&fit=crop",
-            link: "/menus",
+            link: "/menus?category=Beverages",
             icon: (className) => (
                 <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 8h-3V4H3c-1.1 0-2 .9-2 2v11h2c0 1.66 1.34 3 3 3s3-1.34 3-3h6c0 1.66 1.34 3 3 3s3-1.34 3-3h2 v-5l-3-4z" />
@@ -196,7 +196,7 @@ const Home = () => {
             title: "Cakes",
             description: "Made for celebrations",
             img: "https://images.unsplash.com/photo-1578985545062-69928b1d9587?q=80&w=500&auto=format&fit=crop",
-            link: "/menus",
+            link: "/menus?category=Cakes",
             icon: (className) => (
                 <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 15.546c-.523 0-1.046.151-1.5.454a2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.704 2.704 0 00-3 0 2.704 2.704 0 01-3 0 2.701 2.701 0 00-1.5-.454M9 6v2m3-2v2m3-2v2M9 3h.01M12 3h.01M15 3h.01M21 21v-7a2 2 0 00-2-2H5a2 2 0 00-2 2v7h18zm-3-9v-2a2 2 0 00-2-2H8a2 2 0 00-2 2v2h12z" />

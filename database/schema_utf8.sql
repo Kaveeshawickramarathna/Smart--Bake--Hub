@@ -591,6 +591,22 @@ LOCK TABLES `users` WRITE;
 INSERT INTO `users` VALUES (20,'nimmani','kaveeshanimmani2@gmail.com','$2b$10$nJT5D5c.cV8ALNn6P5v9f.TdToLQfY.mMyMLJ/60LE/iX.NTVczlS','admin','active',NULL,NULL,NULL,'2026-08-25 12:20:07','2026-08-25 12:20:07'),(21,'chamodi','chamodiumayangana2001@gmail.com','$2b$10$6yO98fYiixwRhnMXIhaOvO0KM.BO2a1ih9L0wahMT.YLm8PUa4NaW','customer','active',NULL,NULL,NULL,'2026-08-25 12:23:12','2026-08-25 12:23:12'),(22,'lahiru','lahiru@gmail.com','$2b$10$hAjefAL8tizqr0wLz1vggePt6Ozh/D2inZsOlMFEoiZRo8.8yDN0W','customer','active',NULL,NULL,NULL,'2026-08-25 16:14:26','2026-08-25 16:14:26');
 /*!40000 ALTER TABLE `users` ENABLE KEYS */;
 UNLOCK TABLES;
+
+--
+-- Table structure for table `system_settings`
+--
+
+CREATE TABLE IF NOT EXISTS `system_settings` (
+  `setting_key` varchar(100) NOT NULL,
+  `setting_value` text NOT NULL,
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`setting_key`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+INSERT INTO `system_settings` (`setting_key`, `setting_value`) 
+VALUES ('ai_daily_run_time', '00:00'), ('ai_auto_run_enabled', 'true')
+ON DUPLICATE KEY UPDATE `setting_key` = `setting_key`;
+
 /*!40103 SET TIME_ZONE=@OLD_TIME_ZONE */;
 
 /*!40101 SET SQL_MODE=@OLD_SQL_MODE */;

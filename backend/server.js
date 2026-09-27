@@ -9,7 +9,19 @@ const app = express();
 const db = require('./src/config/db');
 
 // Middleware
-app.use(cors());
+const allowedOrigins = process.env.FRONTEND_URL
+    ? process.env.FRONTEND_URL.split(',').map(url => url.trim())
+    : ['http://localhost:5173', 'http://localhost:3000'];
+
+app.use(cors({
+    origin: (origin, callback) => {
+        if (!origin || allowedOrigins.includes(origin) || allowedOrigins.includes('*') || process.env.NODE_ENV !== 'production') {
+            return callback(null, true);
+        }
+        return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true
+}));
 app.use(express.json());
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
@@ -31,6 +43,8 @@ const addonRoutes = require('./src/routes/addonRoutes');
 const cakeDesignRoutes = require('./src/routes/cakeDesignRoutes');
 const cakeOptionRoutes = require('./src/routes/cakeOptionRoutes');
 const paymentRoutes = require('./src/routes/paymentRoutes');
+const settingsRoutes = require('./src/routes/settingsRoutes');
+const { initAiScheduler } = require('./src/utils/aiScheduler');
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/products', productRoutes);
@@ -48,6 +62,7 @@ app.use('/api/addons', addonRoutes);
 app.use('/api/cake-designs', cakeDesignRoutes);
 app.use('/api/cake-options', cakeOptionRoutes);
 app.use('/api/payments', paymentRoutes);
+app.use('/api/settings', settingsRoutes);
 app.get('/', (req, res) => {
     res.send('Smart Bake Hub API is running...');
 });
@@ -64,5 +79,6 @@ const PORT = process.env.PORT || 5000;
 
     app.listen(PORT, () => {
         console.log(`Server running on port ${PORT}`);
+        initAiScheduler();
     });
 })();

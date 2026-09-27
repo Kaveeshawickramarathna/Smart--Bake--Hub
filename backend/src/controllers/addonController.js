@@ -22,34 +22,65 @@ const getAddons = async (req, res) => {
 // @desc    Create a premium add-on
 const createAddon = async (req, res) => {
     try {
-        const { id, name, price } = req.body;
+        let { id, name, price } = req.body;
 
-        if (!id || !name || !price) {
+        if (!name || price === undefined || price === null || price === '') {
             return res.status(400).json({
                 success: false,
-                message: 'ID, name, and price are required'
+                message: 'Name and price are required'
             });
         }
 
-        const query = `INSERT INTO premium_addons (id, name, price) VALUES (?, ?, ?)`;
-        await pool.query(query, [id, name, price]);
+        if (!id || id.trim() === '') {
+            id = name.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/^_+|_+$/g, '') + '_' + Date.now();
+        }
+
+        const query = `INSERT INTO premium_addons (id, name, price, status) VALUES (?, ?, ?, 'active')`;
+        await pool.query(query, [id, name, parseFloat(price) || 0]);
 
         res.status(201).json({
             success: true,
             message: 'Add-on created successfully',
-            data: { id, name, price, status: 'active' }
+            data: { id, name, price: parseFloat(price) || 0, status: 'active' }
         });
     } catch (error) {
         console.error('Error creating add-on:', error);
         if (error.code === 'ER_DUP_ENTRY') {
             return res.status(400).json({
                 success: false,
-                message: 'An add-on with this ID already exists'
+                message: 'An add-on with this ID or name already exists'
             });
         }
         res.status(500).json({
             success: false,
             message: 'Error creating add-on'
+        });
+    }
+};
+
+// @desc    Delete a premium add-on
+const deleteAddon = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const query = `DELETE FROM premium_addons WHERE id = ?`;
+        const [result] = await pool.query(query, [id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({
+                success: false,
+                message: 'Add-on not found'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Add-on deleted successfully'
+        });
+    } catch (error) {
+        console.error('Error deleting add-on:', error);
+        res.status(500).json({
+            success: false,
+            message: 'Error deleting add-on'
         });
     }
 };
@@ -93,5 +124,6 @@ const updateAddonStatus = async (req, res) => {
 module.exports = {
     getAddons,
     createAddon,
+    deleteAddon,
     updateAddonStatus
 };

@@ -65,6 +65,16 @@ const createBooking = async (req, res) => {
     }
 };
 
+const safeParseAddOns = (val) => {
+    if (!val) return [];
+    if (typeof val === 'object') return val;
+    try {
+        return JSON.parse(val);
+    } catch {
+        return [];
+    }
+};
+
 // @desc    Get user's event bookings
 // @route   GET /api/bookings
 // @access  Private
@@ -75,10 +85,10 @@ const getUserBookings = async (req, res) => {
             [req.user.id]
         );
         
-        // Parse add_ons back to JSON object if stringified
+        // Parse add_ons safely back to JSON object if stringified
         const formatted = bookings.map(b => ({
             ...b,
-            add_ons: b.add_ons ? JSON.parse(b.add_ons) : []
+            add_ons: safeParseAddOns(b.add_ons)
         }));
 
         res.json(formatted);
@@ -96,10 +106,10 @@ const getAllBookings = async (req, res) => {
             'SELECT * FROM bookings ORDER BY event_date DESC'
         );
 
-        // Parse add_ons
+        // Parse add_ons safely
         const formatted = bookings.map(b => ({
             ...b,
-            add_ons: b.add_ons ? JSON.parse(b.add_ons) : []
+            add_ons: safeParseAddOns(b.add_ons)
         }));
 
         res.json(formatted);

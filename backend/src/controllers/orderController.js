@@ -2,7 +2,7 @@ const pool = require('../config/db');
 
 const placeOrder = async (req, res) => {
     const { items, order_type, special_note } = req.body;
-    const userId = req.user.id;
+    const userId = req.user?.id || null;
 
     if (!items || items.length === 0) {
         return res.status(400).json({ message: 'Order items cannot be empty' });
@@ -101,23 +101,36 @@ const placeOrder = async (req, res) => {
 const getAllOrders = async (req, res) => {
     try {
         const [orders] = await pool.query(`
-            SELECT o.*, u.name as customer_name, u.email as customer_email
+            SELECT o.*, COALESCE(u.name, 'Guest') as customer_name, COALESCE(u.email, 'N/A') as customer_email
             FROM orders o
-            JOIN users u ON o.user_id = u.id
+            LEFT JOIN users u ON o.user_id = u.id
             ORDER BY o.created_at DESC
         `);
 
-        // Fetch items for each order
-        for (let order of orders) {
-            const [items] = await pool.query(`
-                SELECT oi.*, p.name as product_name, m.name as menu_name, b.name as beverage_name
-                FROM order_items oi
-                LEFT JOIN products p ON oi.product_id = p.id
-                LEFT JOIN dishes m ON oi.menu_id = m.id
-                LEFT JOIN beverages b ON oi.beverage_id = b.id
-                WHERE oi.order_id = ?
-            `, [order.id]);
-            order.items = items;
+        if (orders.length === 0) {
+            return res.json([]);
+        }
+
+        const orderIds = orders.map(o => o.id);
+        const [allItems] = await pool.query(`
+            SELECT oi.*, p.name as product_name, m.name as menu_name, b.name as beverage_name
+            FROM order_items oi
+            LEFT JOIN products p ON oi.product_id = p.id
+            LEFT JOIN dishes m ON oi.menu_id = m.id
+            LEFT JOIN beverages b ON oi.beverage_id = b.id
+            WHERE oi.order_id IN (?)
+        `, [orderIds]);
+
+        const itemsByOrderId = {};
+        for (const item of allItems) {
+            if (!itemsByOrderId[item.order_id]) {
+                itemsByOrderId[item.order_id] = [];
+            }
+            itemsByOrderId[item.order_id].push(item);
+        }
+
+        for (const order of orders) {
+            order.items = itemsByOrderId[order.id] || [];
         }
 
         res.json(orders);
@@ -136,16 +149,30 @@ const getMyOrders = async (req, res) => {
             ORDER BY created_at DESC
         `, [userId]);
 
-        for (let order of orders) {
-            const [items] = await pool.query(`
-                SELECT oi.*, p.name as product_name, m.name as menu_name, b.name as beverage_name
-                FROM order_items oi
-                LEFT JOIN products p ON oi.product_id = p.id
-                LEFT JOIN dishes m ON oi.menu_id = m.id
-                LEFT JOIN beverages b ON oi.beverage_id = b.id
-                WHERE oi.order_id = ?
-            `, [order.id]);
-            order.items = items;
+        if (orders.length === 0) {
+            return res.json([]);
+        }
+
+        const orderIds = orders.map(o => o.id);
+        const [allItems] = await pool.query(`
+            SELECT oi.*, p.name as product_name, m.name as menu_name, b.name as beverage_name
+            FROM order_items oi
+            LEFT JOIN products p ON oi.product_id = p.id
+            LEFT JOIN dishes m ON oi.menu_id = m.id
+            LEFT JOIN beverages b ON oi.beverage_id = b.id
+            WHERE oi.order_id IN (?)
+        `, [orderIds]);
+
+        const itemsByOrderId = {};
+        for (const item of allItems) {
+            if (!itemsByOrderId[item.order_id]) {
+                itemsByOrderId[item.order_id] = [];
+            }
+            itemsByOrderId[item.order_id].push(item);
+        }
+
+        for (const order of orders) {
+            order.items = itemsByOrderId[order.id] || [];
         }
 
         res.json(orders);
@@ -157,12 +184,35 @@ const getMyOrders = async (req, res) => {
 
 const updateOrderStatus = async (req, res) => {
     const { id } = req.params;
-    const { status, prep_time } = req.body;
+    const { status, prep_time, payment_status, payment_method } = req.body;
     
     try {
-        if (prep_time) {
-            await pool.query('UPDATE orders SET status = ?, prep_time = ? WHERE id = ?', [status, prep_time, id]);
-            
+        let updates = [];
+        let params = [];
+
+        if (status) {
+            updates.push('status = ?');
+            params.push(status);
+        }
+        if (prep_time !== undefined && prep_time !== null) {
+            updates.push('prep_time = ?');
+            params.push(prep_time);
+        }
+        if (payment_status) {
+            updates.push('payment_status = ?');
+            params.push(payment_status);
+        }
+        if (payment_method) {
+            updates.push('payment_method = ?');
+            params.push(payment_method);
+        }
+
+        if (updates.length > 0) {
+            params.push(id);
+            await pool.query(`UPDATE orders SET ${updates.join(', ')} WHERE id = ?`, params);
+        }
+
+        if (status && prep_time) {
             const [orderRows] = await pool.query('SELECT user_id FROM orders WHERE id = ?', [id]);
             if (orderRows.length > 0) {
                 const userId = orderRows[0].user_id;
@@ -175,9 +225,8 @@ const updateOrderStatus = async (req, res) => {
                     [userId, `Order #${id} Accepted`, `Your order has been accepted and will be ready in approximately ${timeString}.`, 'order']
                 );
             }
-        } else {
-            await pool.query('UPDATE orders SET status = ? WHERE id = ?', [status, id]);
         }
+
         res.json({ message: 'Order status updated successfully' });
     } catch (error) {
         console.error('Error updating order status:', error);
