@@ -9,7 +9,7 @@ import {
     Calendar, MessageSquare, Bell, User, LogOut, ChevronLeft, 
     ChevronRight, Search, Clock, Check, Play, CheckCircle2, 
     ArrowUpRight, Users, Store, Settings, HelpCircle, FileText, ChevronDown,
-    Utensils, Coffee, Package, Cake, ChefHat, ExternalLink, RefreshCw,
+    Utensils, Coffee, Package, Cake, Cookie, ChefHat, ExternalLink, RefreshCw,
     ShieldAlert, CheckSquare, Layers, Menu, X, ArrowRight, DollarSign
 } from 'lucide-react';
 import LogoutConfirmation from '../../components/LogoutConfirmation';
@@ -21,6 +21,7 @@ import Events from '../admin/Events';
 import ProductMenuManagement from '../admin/ProductMenuManagement';
 import BeveragesManagement from '../admin/BeveragesManagement';
 import CakeDesigns from '../admin/CakeDesigns';
+import Products from '../admin/Products';
 import InventoryManagement from '../admin/InventoryManagement';
 import AddEvent from '../admin/AddEvent';
 
@@ -37,6 +38,9 @@ const StaffDashboard = () => {
     const [showNotifications, setShowNotifications] = useState(false);
     const [recentOrders, setRecentOrders] = useState([]);
     const [kitchenFilter, setKitchenFilter] = useState('all'); // all | dine-in | takeaway
+    // Store Selection State
+    const [selectedBranch, setSelectedBranch] = useState('Main Branch');
+    const [isBranchMenuOpen, setIsBranchMenuOpen] = useState(false);
 
     // Live data states
     const [orders, setOrders] = useState([]);
@@ -257,6 +261,7 @@ const StaffDashboard = () => {
                 { id: 'menus', label: 'Dishes & Food Items', icon: Utensils },
                 { id: 'beverages', label: 'Beverages', icon: Coffee },
                 { id: 'cakes', label: 'Cakes', icon: Cake },
+                { id: 'products', label: 'Bakery Products', icon: Cookie },
                 { id: 'inventory', label: 'Inventory & Stock Records', icon: Box, alert: inventory.length > 0 }
             ]
         },
@@ -344,6 +349,46 @@ const StaffDashboard = () => {
                         </div>
                     )}
 
+                    {/* Station / Branch Switcher */}
+                    {!isSidebarCollapsed && (
+                        <div className="px-4 mb-4">
+                            <div className="relative">
+                                <span className="text-[10px] font-bold text-[#2E1A12]/50 uppercase tracking-wider ml-1">
+                                    Assigned Branch
+                                </span>
+                                <div 
+                                    onClick={() => setIsBranchMenuOpen(!isBranchMenuOpen)}
+                                    className="mt-1 flex items-center justify-between bg-white/80 border border-[#C8843B]/20 p-2.5 rounded-xl cursor-pointer hover:bg-white transition-all shadow-xs"
+                                >
+                                    <span className="text-xs font-bold text-[#2E1A12] truncate">{selectedBranch}</span>
+                                    <ChevronDown className="w-3.5 h-3.5 text-[#C8843B]" />
+                                </div>
+                                
+                                {isBranchMenuOpen && (
+                                    <div className="absolute top-full left-0 right-0 mt-1.5 bg-white rounded-xl shadow-lg border border-[#C8843B]/20 overflow-hidden z-50 py-1">
+                                        {['Main Branch', 'City Branch', 'Airport Express'].map((branch) => (
+                                            <button
+                                                key={branch}
+                                                onClick={() => {
+                                                    setSelectedBranch(branch);
+                                                    setIsBranchMenuOpen(false);
+                                                    toast.success(`Switched station to ${branch}`);
+                                                }}
+                                                className={`w-full text-left px-3 py-2 text-xs font-bold transition-colors flex items-center justify-between ${
+                                                    selectedBranch === branch 
+                                                    ? 'bg-[#C8843B]/15 text-[#2E1A12]' 
+                                                    : 'text-[#2E1A12]/80 hover:bg-[#C8843B]/10'
+                                                }`}
+                                            >
+                                                <span>{branch}</span>
+                                                {selectedBranch === branch && <Check className="w-3.5 h-3.5 text-[#C8843B]" />}
+                                            </button>
+                                        ))}
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+                    )}
 
                     {/* Navigation Links Grouped */}
                     <nav className="px-4 space-y-5">
@@ -435,6 +480,8 @@ const StaffDashboard = () => {
                         <div className="hidden sm:flex items-center space-x-2 text-xs font-semibold text-[#2E1A12]/70 bg-white/70 px-3 py-1.5 rounded-xl border border-[#C8843B]/20 shadow-xs">
                             <Clock className="w-3.5 h-3.5 text-[#C8843B]" />
                             <span>{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</span>
+                            <span className="text-[#C8843B]/40">•</span>
+                            <span className="text-[11px] text-[#C8843B] font-bold">{selectedBranch}</span>
                         </div>
                     </div>
 
@@ -1201,6 +1248,9 @@ const StaffDashboard = () => {
                     {/* TAB: CAKES */}
                     {activeTab === 'cakes' && <CakeDesigns />}
 
+                    {/* TAB: BAKERY PRODUCTS */}
+                    {activeTab === 'products' && <Products />}
+
                     {/* TAB: INVENTORY & STOCK RECORDS */}
                     {activeTab === 'inventory' && <InventoryManagement />}
 
@@ -1234,8 +1284,8 @@ const StaffDashboard = () => {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <span className="text-[11px] font-bold text-[#2E1A12]/50 uppercase tracking-wider block">Access Level</span>
-                                        <span className="text-sm font-bold text-[#C8843B]">Operational Staff</span>
+                                        <span className="text-[11px] font-bold text-[#2E1A12]/50 uppercase tracking-wider block">Terminal Location</span>
+                                        <span className="text-sm font-bold text-[#C8843B]">{selectedBranch}</span>
                                     </div>
                                 </div>
 

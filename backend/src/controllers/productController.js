@@ -131,9 +131,6 @@ const updateProductDiscount = async (req, res) => {
 
     try {
         const disc = discount_percentage !== undefined ? Number(discount_percentage) : 0;
-        
-        try { await pool.query('ALTER TABLE dishes ADD COLUMN IF NOT EXISTS discount_percentage decimal(5,2) DEFAULT 0.00'); } catch (e) {}
-        try { await pool.query('ALTER TABLE beverages ADD COLUMN IF NOT EXISTS discount_percentage decimal(5,2) DEFAULT 0.00'); } catch (e) {}
 
         if (item_type === 'dish' || item_type === 'menu') {
             await pool.query('UPDATE dishes SET discount_percentage = ? WHERE id = ?', [disc, id]);

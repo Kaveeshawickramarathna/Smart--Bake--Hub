@@ -48,7 +48,6 @@ const Products = () => {
             toast.error('Failed to update availability');
         }
     };
-
     const handleDiscountSave = async (product) => {
         try {
             const val = parseFloat(editingDiscount.value) || 0;

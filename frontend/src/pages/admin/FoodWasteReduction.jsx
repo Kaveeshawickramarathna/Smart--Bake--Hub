@@ -135,7 +135,10 @@ const FoodWasteReduction = () => {
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                 <div>
                     <div className="flex items-center gap-2">
-                        <span className="text-xs font-semibold text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-full border border-emerald-200">
+                        <span className="px-2.5 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            Feature 9 • AI-Powered Management
+                        </span>
+                        <span className="text-xs text-gray-400">
                             Live Store Inventory
                         </span>
                     </div>

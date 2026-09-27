@@ -31,7 +31,7 @@ const createCheckoutSession = async (req, res) => {
     const frontendUrl = getFrontendUrl(req);
 
     try {
-        const [orders] = await pool.query('SELECT * FROM orders WHERE id = ? AND user_id = ?', [orderId, req.user.id]);
+        const [orders] = await pool.query('SELECT * FROM orders WHERE id = ?', [orderId]);
         if (orders.length === 0) {
             return res.status(404).json({ message: 'Order not found' });
         }
@@ -114,7 +114,7 @@ const confirmPayment = async (req, res) => {
             const parts = sessionId.split('_');
             const orderId = parts[2];
 
-            const [orders] = await pool.query('SELECT * FROM orders WHERE id = ? AND user_id = ?', [orderId, req.user.id]);
+            const [orders] = await pool.query('SELECT * FROM orders WHERE id = ?', [orderId]);
             if (orders.length === 0) {
                 return res.status(404).json({ message: 'Order not found' });
             }
@@ -135,7 +135,7 @@ const confirmPayment = async (req, res) => {
                 return res.status(400).json({ message: 'Session has no associated order' });
             }
 
-            const [orders] = await pool.query('SELECT * FROM orders WHERE id = ? AND user_id = ?', [orderId, req.user.id]);
+            const [orders] = await pool.query('SELECT * FROM orders WHERE id = ?', [orderId]);
             if (orders.length === 0) {
                 return res.status(404).json({ message: 'Order not found' });
             }
