@@ -28,7 +28,7 @@ CREATE TABLE `beverage_categories` (
   `description` text,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=8 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -67,7 +67,7 @@ CREATE TABLE `beverages` (
   PRIMARY KEY (`id`),
   KEY `fk_bev_cat` (`beverage_category_id`),
   CONSTRAINT `fk_bev_cat` FOREIGN KEY (`beverage_category_id`) REFERENCES `beverage_categories` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -76,7 +76,7 @@ CREATE TABLE `beverages` (
 
 LOCK TABLES `beverages` WRITE;
 /*!40000 ALTER TABLE `beverages` DISABLE KEYS */;
-INSERT INTO `beverages` VALUES (2,5,'WBB0001','Nestea','regular',120.00,0.00,0.00,'2026-07-05 00:53:01','2026-07-05 00:53:01','active',1,NULL),(3,6,'WBB0002','Coca Cola','bottles',0.00,0.00,0.00,'2026-07-05 00:53:48','2026-07-05 00:53:48','active',1,'[{\"size\": \"250 ML\", \"price\": 130}]'),(4,6,'WBB0003','Coca Cola','bottles',0.00,0.00,0.00,'2026-07-05 00:54:15','2026-07-05 00:54:15','active',1,'[{\"size\": \"500ML\", \"price\": 250}]'),(5,6,'WBB0004','Pepsi','bottles',0.00,0.00,0.00,'2026-07-05 03:52:34','2026-07-05 03:52:34','active',1,'[{\"size\": \"250ml\", \"price\": 170}]'),(6,7,'WBB0005','Papaya Juice','regular',500.00,0.00,0.00,'2026-07-05 03:59:12','2026-07-05 03:59:12','active',1,NULL);
+INSERT INTO `beverages` (`id`,`beverage_category_id`,`beverage_code`,`name`,`portion_type`,`price`,`price_small`,`price_large`,`created_at`,`updated_at`,`status`,`is_available`,`price_variants`) VALUES (2,5,'WBB0001','Nestea','regular',120.00,0.00,0.00,'2026-07-05 00:53:01','2026-07-05 00:53:01','active',1,NULL),(3,6,'WBB0002','Coca Cola','bottles',0.00,0.00,0.00,'2026-07-05 00:53:48','2026-07-05 00:53:48','active',1,'[{\"size\": \"250 ML\", \"price\": 130}]'),(4,6,'WBB0003','Coca Cola','bottles',0.00,0.00,0.00,'2026-07-05 00:54:15','2026-07-05 00:54:15','active',1,'[{\"size\": \"500ML\", \"price\": 250}]'),(5,6,'WBB0004','Pepsi','bottles',0.00,0.00,0.00,'2026-07-05 03:52:34','2026-07-05 03:52:34','active',1,'[{\"size\": \"250ml\", \"price\": 170}]'),(6,7,'WBB0005','Papaya Juice','regular',500.00,0.00,0.00,'2026-07-05 03:59:12','2026-07-05 03:59:12','active',1,NULL);
 /*!40000 ALTER TABLE `beverages` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -111,7 +111,7 @@ CREATE TABLE `bookings` (
   KEY `user_id` (`user_id`),
   CONSTRAINT `bookings_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL,
   CONSTRAINT `bookings_chk_1` CHECK ((`status` in (_latin1'pending',_latin1'approved',_latin1'cancelled')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -139,7 +139,7 @@ CREATE TABLE `catering_packages` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   `status` enum('active','inactive') DEFAULT 'active',
   PRIMARY KEY (`id`)
-) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=2 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -166,7 +166,7 @@ CREATE TABLE `dish_categories` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -204,7 +204,7 @@ CREATE TABLE `dishes` (
   PRIMARY KEY (`id`),
   KEY `dishes_ibfk_1` (`category_id`),
   CONSTRAINT `dishes_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `dish_categories` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=4 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -213,7 +213,7 @@ CREATE TABLE `dishes` (
 
 LOCK TABLES `dishes` WRITE;
 /*!40000 ALTER TABLE `dishes` DISABLE KEYS */;
-INSERT INTO `dishes` VALUES (1,NULL,'A La Carte','WBD0001','Vegetable Soup','regular',400.00,0.00,0.00,'2026-07-04 18:35:04','2026-07-04 18:35:04','active',1),(2,NULL,'A La Carte','WBD0002','Chicken With Egg Soup','regular',450.00,0.00,0.00,'2026-07-04 20:25:52','2026-07-04 20:25:52','active',1),(3,NULL,'A La Carte','WBD0003','Vegetable Noodles','portions',600.00,650.00,950.00,'2026-07-04 20:56:18','2026-07-04 20:56:18','active',1);
+INSERT INTO `dishes` (`id`,`category_id`,`menu_category`,`dish_code`,`name`,`portion_type`,`price`,`price_small`,`price_large`,`created_at`,`updated_at`,`status`,`is_available`) VALUES (1,NULL,'A La Carte','WBD0001','Vegetable Soup','regular',400.00,0.00,0.00,'2026-07-04 18:35:04','2026-07-04 18:35:04','active',1),(2,NULL,'A La Carte','WBD0002','Chicken With Egg Soup','regular',450.00,0.00,0.00,'2026-07-04 20:25:52','2026-07-04 20:25:52','active',1),(3,NULL,'A La Carte','WBD0003','Vegetable Noodles','portions',600.00,650.00,950.00,'2026-07-04 20:56:18','2026-07-04 20:56:18','active',1);
 /*!40000 ALTER TABLE `dishes` ENABLE KEYS */;
 UNLOCK TABLES;
 
@@ -239,7 +239,7 @@ CREATE TABLE `order_items` (
   CONSTRAINT `order_items_ibfk_1` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE CASCADE,
   CONSTRAINT `order_items_ibfk_2` FOREIGN KEY (`product_id`) REFERENCES `products` (`id`) ON DELETE SET NULL,
   CONSTRAINT `order_items_ibfk_3` FOREIGN KEY (`menu_id`) REFERENCES `dishes` (`id`) ON DELETE SET NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -275,7 +275,7 @@ CREATE TABLE `orders` (
   CONSTRAINT `orders_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   CONSTRAINT `orders_chk_1` CHECK ((`order_type` in (_latin1'dine-in',_latin1'takeaway'))),
   CONSTRAINT `orders_chk_2` CHECK ((`status` in (_latin1'pending',_latin1'accepted',_latin1'preparing',_latin1'ready',_latin1'completed',_latin1'cancelled')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -301,7 +301,7 @@ CREATE TABLE `product_categories` (
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   UNIQUE KEY `name` (`name`)
-) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=9 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -338,7 +338,7 @@ CREATE TABLE `products` (
   KEY `category_id` (`category_id`),
   CONSTRAINT `products_ibfk_1` FOREIGN KEY (`category_id`) REFERENCES `product_categories` (`id`) ON DELETE SET NULL,
   CONSTRAINT `products_chk_1` CHECK ((`availability` in (_latin1'available',_latin1'out_of_stock')))
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
@@ -373,7 +373,7 @@ CREATE TABLE `users` (
   UNIQUE KEY `email` (`email`),
   CONSTRAINT `users_chk_1` CHECK ((`role` in (_latin1'admin',_latin1'staff',_latin1'customer'))),
   CONSTRAINT `users_chk_2` CHECK ((`status` in (_latin1'active',_latin1'inactive',_latin1'pending_verification')))
-) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+) ENGINE=InnoDB AUTO_INCREMENT=20 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 
 --
